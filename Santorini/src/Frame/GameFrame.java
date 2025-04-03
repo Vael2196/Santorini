@@ -5,6 +5,7 @@ import java.awt.*;
 
 /**
  * Frame with a 5x5 board (game screen)
+ * Just played around with some values in a code, for the most part the thing is from StackOverflow
  */
 public class GameFrame extends JFrame {
     private Board board;
