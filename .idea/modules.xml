@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Santorini/Santorini.iml" filepath="$PROJECT_DIR$/Santorini/Santorini.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/project.iml" filepath="$PROJECT_DIR$/.idea/project.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Santorini.iml" filepath="$PROJECT_DIR$/Santorini.iml" />
     </modules>
   </component>
 </project>

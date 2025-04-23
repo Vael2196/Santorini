@@ -9,37 +9,27 @@ import java.awt.event.ActionListener;
  * (basically, a connection to the backend Tile;
  * I reckon you'd call that a controller, even though there are some points suggesting against it)
  */
-class TileButton extends JButton {
-    private int row;
-    private int col;
-    private Tile tile;
+public class TileButton extends JButton {
+    private final Tile tile;
 
-    public TileButton(int row, int col, Tile tile) {
-        this.row = row;
-        this.col = col;
+    public TileButton(Tile tile) {
         this.tile = tile;
-        updateDisplay();
-
-        ///honesty, got this idea of making ActionListener from introduction to Java unit. It looks quite neat to me, at least in a logical sense
-        addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // select a builder/move/build (tile highlight basically)
-                System.out.println("Frame.Tile clicked at: " + row + ", " + col);
-            }
-        });
+        updateAppearance();
+        addActionListener(e -> handleClick());
     }
 
-    public void updateDisplay() {
-        StringBuilder text = new StringBuilder("<html>");
-        text.append("Lvl: ").append(tile.getLevel());
-        if (tile.hasDome()) {
-            text.append("<br>Dome");
-        }
-        if (tile.getOccupant() != null) {
-            text.append("<br>").append(tile.getOccupant().getPlayer());
-        }
-        text.append("</html>");
-        setText(text.toString());
+    private void handleClick() {
+        // Hook into controller logic: select/move/build
+        System.out.println("Clicked tile: " + tile.getX() + "," + tile.getY());
+    }
+
+    public void updateAppearance() {
+        String text = String.format("<html>Lvl:%d%s%s</html>",
+                tile.getBuilding().getLevel(),
+                tile.getBuilding().hasDome() ? "<br>Dome" : "",
+                tile.isOccupied() ? "<br>" + tile.getOccupant().getPlayer().getColor() : ""
+        );
+        setText(text);
+        //TODO: Set background color based on occupant, like :contentReference[oaicite:3]{index=3} type shi
     }
 }
