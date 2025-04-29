@@ -10,16 +10,15 @@ import java.awt.Font;
 
 public class StartingScreen {
     public static void main(String[] args) {
-        JFrame startingframe = new JFrame();
-        startingframe.setVisible(true);
-        startingframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        startingframe.setSize(500,500);
-        startingframe.setTitle("Santorini Board Game");
-        startingframe.getContentPane().setBackground(new Color(135,206,235));
-        startingframe.setLocationRelativeTo(null);
+        JFrame startingFrame = new JFrame();
+        startingFrame.setVisible(true);
+        startingFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        startingFrame.setSize(500,500);
+        startingFrame.setTitle("Santorini Board Game");
+        startingFrame.getContentPane().setBackground(new Color(135,206,235));
+        startingFrame.setLocationRelativeTo(null);
 
         Border border = BorderFactory.createLineBorder(new Color(135,206,235));
-
 
         JLabel textlabel = new JLabel("Welcome to Santorini Board Game");
         textlabel.setForeground(new Color(0,60,90));
@@ -28,11 +27,11 @@ public class StartingScreen {
         textlabel.setBorder(border);
         textlabel.setHorizontalAlignment(JLabel.CENTER);
         textlabel.setVerticalAlignment(JLabel.CENTER);
-        startingframe.add(textlabel);
+        startingFrame.add(textlabel);
 
-        JButton button = new JButton("Start");
-        button.setBounds(200, 400,100,50);
-        //startingframe.add(button);
+        JButton startButton = new JButton("Start");
+        startButton.setBounds(200, 400,100,50);
+        //startingframe.add(startButton);
 
 
 
