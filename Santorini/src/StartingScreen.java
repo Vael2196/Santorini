@@ -24,13 +24,13 @@ public class StartingScreen {
         startingFrame.setSize(500, 500);
         startingFrame.setTitle("Santorini Board Game");
         startingFrame.getContentPane().setBackground(new Color(135, 206, 235));
-        //startingFrame.setLocationRelativeTo(null);
+        startingFrame.setLocationRelativeTo(null);
 
         Border border = BorderFactory.createLineBorder(new Color(135, 206, 235));
 
-        JLabel textLabel = new JLabel("Welcome to Santorini Board Game");
+        JLabel textLabel = new JLabel("Santorini Board Game");
         textLabel.setForeground(new Color(0, 60, 90));
-        textLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        textLabel.setFont(new Font("Arial", Font.BOLD, 24));
         textLabel.setBounds(50, 150, 400, 100);
         textLabel.setBorder(border);
         textLabel.setHorizontalAlignment(JLabel.CENTER);
@@ -38,8 +38,13 @@ public class StartingScreen {
         startingFrame.add(textLabel);
 
         JButton startButton = new JButton("Start");
-        startButton.setBounds(200, 400, 100, 50);
+        startButton.setBounds(200, 350, 100, 50);
+        //startButton.setBounds(200, 400, 100, 50);
         textLabel.add(startButton);
+
+        JButton exitButton =  new JButton("Exit");
+        exitButton.setBounds(200,400,100,50);
+        textLabel.add(exitButton);
 
         startButton.addActionListener( a ->{
             Board board = Board.createSquare(5);
@@ -66,6 +71,9 @@ public class StartingScreen {
             SwingUtilities.invokeLater(() -> {});
         });
 
+        exitButton.addActionListener( a -> {
+            System.exit(0);
+        });
 
 
     }
