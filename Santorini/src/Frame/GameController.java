@@ -9,7 +9,7 @@ import java.util.List;
 
 public class GameController {
 
-    private enum Phase {SELECT, MOVE, BUILD}
+    private enum Phase {SETUP, SELECT, MOVE, BUILD, ENDOFTURN, WIN}
 
     private final Board board;
     private GameFrame frame;
@@ -32,14 +32,26 @@ public class GameController {
     public void onTileClicked(Tile tile) {
         Player current = players.get(currentPlayerIndex);
         switch (phase) {
+            case SETUP:
+                //godcard.handleSetup
+                break;
             case SELECT:
+                //godcard.handleSelect
                 handleSelect(current, tile);
                 break;
             case MOVE:
+                //godcard.handleMove
                 handleMove(current, tile);
                 break;
             case BUILD:
+                //godCard.handleBuild
                 handleBuild(current, tile);
+                break;
+            case ENDOFTURN:
+                //godCard.handleTurnEnd
+                break;
+            case WIN:
+                //godCard.handleWin
                 break;
         }
         frame.refresh();

@@ -19,7 +19,7 @@ public class GameFrame extends JFrame {
     public GameFrame(Board board, GameController controller) {
         setTitle("Santorini");
         setSize(1000, 800);
-        setContentPane(new ImagePanel("C:/Users/colli/OneDrive/Desktop/Monash/YR2025/programming/santorini/project/Santorini/src/assets/background.jpg"));
+        setContentPane(new ImagePanel("C:/Users/colli/OneDrive/Desktop/Monash/YR2025/programming/santorini/project/Santorini/src/assets/startscreen.jpg"));
         int rows = board.getRows(), cols = board.getCols();
         buttons = new TileButton[rows][cols];
         setLayout(new GridLayout(rows, cols));
