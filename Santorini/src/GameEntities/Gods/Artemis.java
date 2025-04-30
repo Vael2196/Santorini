@@ -3,7 +3,7 @@ package GameEntities.Gods;
 import Frame.*;
 import GameEntities.*;
 
-public class Artemis implements GodCard {
+public class Artemis extends GodCard {
     private Tile firstMove;
 
     @Override

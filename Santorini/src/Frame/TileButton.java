@@ -10,7 +10,8 @@ public class TileButton extends JButton {
     private final Tile tile;
     private final GameController controller; // new
 
-    public TileButton(Tile tile, GameController controller) {
+    public TileButton(Tile tile, GameController controller, ImageIcon icon) {
+        super(icon);
         this.tile = tile;
         this.controller = controller;
         updateAppearance();

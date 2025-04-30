@@ -3,7 +3,7 @@ package GameEntities.Gods;
 import Frame.*;
 import GameEntities.*;
 
-public class Demeter implements GodCard {
+public class Demeter extends GodCard {
     private Tile firstBuild;
 
     @Override
@@ -18,4 +18,8 @@ public class Demeter implements GodCard {
         }
     }
 
+    @Override
+    public void applyMovePower(Worker w, Tile target) {
+        super.applyMovePower(w, target);
+    }
 }

@@ -1,14 +1,17 @@
 package GameEntities.Gods;
 
-import GameEntities.*;
-import Frame.*;
+import Frame.Tile;
+import GameEntities.Worker;
 
-/**
- * Call before or/and after move and build phases
- **/
-public interface GodCard {
+public abstract class GodCard implements GodCardInterface {
 
-    default void applyMovePower(Worker w, Tile target) {}
-    default void applyBuildPower(Worker w, Tile target) {}
+    @Override
+    public void applyMovePower(Worker w, Tile target) {
+        GodCardInterface.super.applyMovePower(w, target);
+    }
 
+    @Override
+    public void applyBuildPower(Worker w, Tile target) {
+        GodCardInterface.super.applyBuildPower(w, target);
+    }
 }

@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Player {
     private final String color;
-    private GodCard godCard;
+    private GodCardInterface godCard;
     private final List<Worker> workers = new ArrayList<>();
 
     public Player(String color) {
@@ -17,10 +17,10 @@ public class Player {
     public String getColor() {
         return color;
     }
-    public GodCard getGodCard() {
+    public GodCardInterface getGodCard() {
         return godCard;
     }
-    public void setGodCard(GodCard godCard) {
+    public void setGodCard(GodCardInterface godCard) {
         this.godCard = godCard;
     }
 
