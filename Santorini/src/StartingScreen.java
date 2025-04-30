@@ -1,11 +1,19 @@
 
 
+import Frame.Boards.Board;
+import Frame.GameController;
+import Frame.GameFrame;
+import GameEntities.Gods.Artemis;
+import GameEntities.Gods.Demeter;
+import GameEntities.Player;
+import GameEntities.Worker;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.Color;
 import java.awt.Font;
-
-
+import java.util.Arrays;
+import java.util.List;
 
 
 public class StartingScreen {
@@ -13,27 +21,54 @@ public class StartingScreen {
         JFrame startingFrame = new JFrame();
         startingFrame.setVisible(true);
         startingFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        startingFrame.setSize(500,500);
+        startingFrame.setSize(500, 500);
         startingFrame.setTitle("Santorini Board Game");
-        startingFrame.getContentPane().setBackground(new Color(135,206,235));
-        startingFrame.setLocationRelativeTo(null);
+        startingFrame.getContentPane().setBackground(new Color(135, 206, 235));
+        //startingFrame.setLocationRelativeTo(null);
 
-        Border border = BorderFactory.createLineBorder(new Color(135,206,235));
+        Border border = BorderFactory.createLineBorder(new Color(135, 206, 235));
 
-        JLabel textlabel = new JLabel("Welcome to Santorini Board Game");
-        textlabel.setForeground(new Color(0,60,90));
-        textlabel.setFont(new Font("Arial", Font.BOLD, 20 ));
-        textlabel.setBounds(50,150,400,100);
-        textlabel.setBorder(border);
-        textlabel.setHorizontalAlignment(JLabel.CENTER);
-        textlabel.setVerticalAlignment(JLabel.CENTER);
-        startingFrame.add(textlabel);
+        JLabel textLabel = new JLabel("Welcome to Santorini Board Game");
+        textLabel.setForeground(new Color(0, 60, 90));
+        textLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        textLabel.setBounds(50, 150, 400, 100);
+        textLabel.setBorder(border);
+        textLabel.setHorizontalAlignment(JLabel.CENTER);
+        textLabel.setVerticalAlignment(JLabel.CENTER);
+        startingFrame.add(textLabel);
 
         JButton startButton = new JButton("Start");
-        startButton.setBounds(200, 400,100,50);
-        //startingframe.add(startButton);
+        startButton.setBounds(200, 400, 100, 50);
+        textLabel.add(startButton);
+
+        startButton.addActionListener( a ->{
+            Board board = Board.createSquare(5);
+
+            Player p1 = new Player("Blue");
+            Player p2 = new Player("Red");
+            p1.setGodCard(new Artemis());
+            p2.setGodCard(new Demeter());
+
+            Worker w1 = new Worker(p1, board.getTile(0,0));
+            Worker w2 = new Worker(p1, board.getTile(0,1));
+            p1.addWorker(w1);
+            p1.addWorker(w2);
+            Worker w3 = new Worker(p2, board.getTile(4,4));
+            Worker w4 = new Worker(p2, board.getTile(4,3));
+            p2.addWorker(w3);
+            p2.addWorker(w4);
+
+            List<Player> players = Arrays.asList(p1, p2);
+            GameController controller = new GameController(board, null, players);
+            GameFrame frame = new GameFrame(board, controller);
+            controller.setFrame(frame);
+
+            SwingUtilities.invokeLater(() -> {});
+        });
 
 
 
     }
+
+
 }
