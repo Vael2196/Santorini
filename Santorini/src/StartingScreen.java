@@ -4,6 +4,7 @@ import Frame.Boards.Board;
 import Frame.GameController;
 import Frame.GameFrame;
 import Frame.GodPowerController;
+import Frame.ImagePanel;
 import GameEntities.Gods.Artemis;
 import GameEntities.Gods.Demeter;
 import GameEntities.Player;
@@ -18,14 +19,19 @@ import java.util.List;
 
 
 public class StartingScreen {
+
+    private static final String STARTSCREEN = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/startscreen.jpg";
+
     public static void main(String[] args) {
         JFrame startingFrame = new JFrame();
+        JPanel imgPanel = new ImagePanel(STARTSCREEN);
         startingFrame.setVisible(true);
         startingFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         startingFrame.setSize(500, 500);
         startingFrame.setTitle("Santorini Board Game");
-        startingFrame.getContentPane().setBackground(new Color(135, 206, 235));
+        //startingFrame.getContentPane().setBackground(STARTSCREEN);
         startingFrame.setLocationRelativeTo(null);
+        startingFrame.add(imgPanel);
 
         Border border = BorderFactory.createLineBorder(new Color(135, 206, 235));
 

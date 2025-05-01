@@ -2,14 +2,9 @@ package Frame;
 
 import Frame.Boards.Board;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.image.ImageObserver;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Frame with a 5x5 board (game screen)
@@ -84,21 +79,5 @@ public class GameFrame extends JFrame {
                 b.updateAppearance();
     }
 
-    class ImagePanel extends JPanel {
-        private Image image;
 
-        public ImagePanel(String imagePath) {
-            try {
-                image = ImageIO.read(new File(imagePath));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
-        }
-    }
 }

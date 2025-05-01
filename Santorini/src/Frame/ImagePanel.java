@@ -1,4 +1,4 @@
-package Frame.Boards;
+package Frame;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -6,7 +6,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
-class ImagePanel extends JPanel {
+public class ImagePanel extends JPanel {
     private Image image;
 
     public ImagePanel(String imagePath) {

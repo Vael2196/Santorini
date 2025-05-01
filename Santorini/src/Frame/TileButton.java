@@ -66,7 +66,7 @@ public class TileButton extends JButton {
                 } else {
                     iconPath = LEVEL0;
                     if (tile.isOccupied()) {
-                        if (tile.getOccupant().getPlayer().getColor() == "Purple") {
+                        if (tile.getOccupant().getPlayer().getColor() == "Blue") {
                             iconPath = LEVEL0_P1;
                         } else {
                             iconPath = LEVEL0_P2;
@@ -80,7 +80,7 @@ public class TileButton extends JButton {
                 } else {
                     iconPath = LEVEL1;
                     if (tile.isOccupied()) {
-                        if (tile.getOccupant().getPlayer().getColor() == "Purple") {
+                        if (tile.getOccupant().getPlayer().getColor() == "Blue") {
                             iconPath = LEVEL1_P1;
                         } else {
                             iconPath = LEVEL1_P2;
@@ -94,7 +94,7 @@ public class TileButton extends JButton {
                 } else {
                     iconPath = LEVEL2;
                     if (tile.isOccupied()) {
-                        if (tile.getOccupant().getPlayer().getColor() == "Purple") {
+                        if (tile.getOccupant().getPlayer().getColor() == "Blue") {
                             iconPath = LEVEL2_P1;
                         } else {
                             iconPath = LEVEL2_P2;
@@ -108,7 +108,7 @@ public class TileButton extends JButton {
                 } else {
                     iconPath = LEVEL3;
                     if (tile.isOccupied()) {
-                        if (tile.getOccupant().getPlayer().getColor() == "Purple") {
+                        if (tile.getOccupant().getPlayer().getColor() == "Blue") {
                             iconPath = LEVEL3_P1;
                         } else {
                             iconPath = LEVEL3_P2;
