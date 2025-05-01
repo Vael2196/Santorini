@@ -11,22 +11,22 @@ public class TileButton extends JButton {
     private final Tile tile;
     private final Controller controller;
 
-    private final String LEVEL0 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level0.png";
-    private final String LEVEL0_P1 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level0_p1.png";
-    private final String LEVEL0_P2 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level0_p2.png";
-    private final String LEVEL0_DOME = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level0_dome.png";
-    private final String LEVEL1 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level1.png";
-    private final String LEVEL1_P1 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level1_p1.png";
-    private final String LEVEL1_P2 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level1_p2.png";
-    private final String LEVEL1_DOME = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level1_dome.png";
-    private final String LEVEL2 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level2.png";
-    private final String LEVEL2_P1 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level2_p1.png";
-    private final String LEVEL2_P2 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level2_p2.png";
-    private final String LEVEL2_DOME = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level2_dome.png";
-    private final String LEVEL3 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level3.png";
-    private final String LEVEL3_P1 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level3_p1.png";
-    private final String LEVEL3_P2 = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level3_p2.png";
-    private final String LEVEL3_DOME = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/level3_dome.png";
+    private final String LEVEL0 = "../project/Santorini/src/assets/level0.png";
+    private final String LEVEL0_P1 = "../project/Santorini/src/assets/level0_p1.png";
+    private final String LEVEL0_P2 = "../project/Santorini/src/assets/level0_p2.png";
+    private final String LEVEL0_DOME = "../project/Santorini/src/assets/level0_dome.png";
+    private final String LEVEL1 = "../project/Santorini/src/assets/level1.png";
+    private final String LEVEL1_P1 = "../project/Santorini/src/assets/level1_p1.png";
+    private final String LEVEL1_P2 = "../project/Santorini/src/assets/level1_p2.png";
+    private final String LEVEL1_DOME = "../project/Santorini/src/assets/level1_dome.png";
+    private final String LEVEL2 = "../project/Santorini/src/assets/level2.png";
+    private final String LEVEL2_P1 = "../project/Santorini/src/assets/level2_p1.png";
+    private final String LEVEL2_P2 = "../project/Santorini/src/assets/level2_p2.png";
+    private final String LEVEL2_DOME = "../project/Santorini/src/assets/level2_dome.png";
+    private final String LEVEL3 = "../project/Santorini/src/assets/level3.png";
+    private final String LEVEL3_P1 = "../project/Santorini/src/assets/level3_p1.png";
+    private final String LEVEL3_P2 = "../project/Santorini/src/assets/level3_p2.png";
+    private final String LEVEL3_DOME = "../project/Santorini/src/assets/level3_dome.png";
 
 
 

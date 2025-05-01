@@ -20,7 +20,7 @@ import java.util.List;
 
 public class StartingScreen {
 
-    private static final String STARTSCREEN = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/startscreen.jpg";
+    private static final String STARTSCREEN = "../project/Santorini/src/assets/startscreen.jpg";
 
     public static void main(String[] args) {
         JFrame startingFrame = new JFrame();

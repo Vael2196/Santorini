@@ -11,7 +11,7 @@ import java.awt.*;
  */
 public class GameFrame extends JFrame {
     private final TileButton[][] buttons;
-    private static final String GAMEBOARD = "C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/gameboard.jpg";
+    private static final String GAMEBOARD = "../project/Santorini/src/assets/gameboard.jpg";
 
     public GameFrame(Board board, Controller controller) {
         Dimension screenSize = new Dimension(1215, 865);
