@@ -1,7 +1,7 @@
 package Frame;
 
 import GameEntities.*;
-import Frame.*;
+import Frame.Tile;
 import Frame.Boards.*;
 
 import javax.swing.*;

@@ -13,7 +13,7 @@ public class Main {
         Board board = Board.createSquare(5);
 
         //Instantiate Players
-        Player p1 = new Player("Blue");
+        Player p1 = new Player("Purple");
         Player p2 = new Player("Red");
 
         //Create and Set God Cards
