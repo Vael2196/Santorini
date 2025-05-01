@@ -7,9 +7,9 @@ import Frame.Boards.*;
 import javax.swing.*;
 import java.util.List;
 
-public class GameController {
+public class GameController implements Controller {
 
-    private enum Phase {SELECT, MOVE, BUILD}
+    enum Phase {SELECT, MOVE, BUILD}
 
     private final Board board;
     private GameFrame frame;
@@ -25,10 +25,12 @@ public class GameController {
         announcePhase();
     }
 
+    @Override
     public void setFrame(GameFrame frame) {
         this.frame = frame;
     }
 
+    @Override
     public void onTileClicked(Tile tile) {
         Player current = players.get(currentPlayerIndex);
         switch (phase) {
@@ -45,7 +47,35 @@ public class GameController {
         frame.refresh();
     }
 
-    private void handleSelect(Player current, Tile tile) {
+    public GameFrame getFrame() {
+        return frame;
+    }
+
+    public Phase getPhase() {
+        return phase;
+    }
+
+    public void setPhase(Phase phase) {
+        this.phase = phase;
+    }
+
+    public Worker getSelectedWorker() {
+        return selectedWorker;
+    }
+
+    public void performMove(Worker w, Tile dest) {
+        Tile origin = w.getCurrentTile();
+        validateMove(w, dest);
+        w.moveTo(dest);
+        checkWin(origin, dest, w.getPlayer());
+    }
+
+    public void performBuild(Worker w, Tile dest) {
+        validateBuild(w, dest);
+        w.build(dest);
+    }
+
+    protected void handleSelect(Player current, Tile tile) {
         if (tile.getOccupant() != null && tile.getOccupant().getPlayer() == current) {
             selectedWorker = tile.getOccupant();
             phase = Phase.MOVE;
@@ -57,19 +87,7 @@ public class GameController {
 
     private void handleMove(Player current, Tile tile) {
         try {
-            Tile origin = selectedWorker.getCurrentTile();
-            validateMove(selectedWorker, tile);
-            selectedWorker.moveTo(tile);
-            current.getGodCard().applyMovePower(selectedWorker, tile);
-
-            int originLevel = origin.getBuilding().getLevel();
-            int newLevel    = tile.getBuilding().getLevel();
-            if (originLevel + 1 == newLevel && newLevel == 3) {
-                System.out.println(current.getColor() + " wins by reaching level 3!");
-                JOptionPane.showMessageDialog(frame, current.getColor() + " wins!");
-                System.exit(0);
-            }
-
+            performMove(selectedWorker, tile);
             phase = Phase.BUILD;
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(frame, e.getMessage());
@@ -79,9 +97,7 @@ public class GameController {
 
     private void handleBuild(Player current, Tile tile) {
         try {
-            validateBuild(selectedWorker, tile);
-            selectedWorker.build(tile);
-            current.getGodCard().applyBuildPower(selectedWorker, tile);
+            performBuild(selectedWorker, tile);
             endTurn();
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(frame, e.getMessage());
@@ -89,7 +105,7 @@ public class GameController {
         announcePhase();
     }
 
-    private void endTurn() {
+    protected void endTurn() {
         phase = Phase.SELECT;
         selectedWorker = null;
         currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
@@ -118,11 +134,20 @@ public class GameController {
             throw new IllegalArgumentException("Can only build on adjacent tiles");
     }
 
+    private void checkWin(Tile origin, Tile dest, Player player) {
+        int oLevel = origin.getBuilding().getLevel();
+        int nLevel = dest.getBuilding().getLevel();
+        if (oLevel + 1 == nLevel && nLevel == 3) {
+            System.out.println(player.getColor() + " wins by reaching level 3!");
+            JOptionPane.showMessageDialog(frame, player.getColor() + " wins!");
+            System.exit(0);
+        }
+    }
+
     /** Prints current player and phase to console (currently for testing purposes only) **/
-    private void announcePhase() {
+    protected void announcePhase() {
         Player current = players.get(currentPlayerIndex);
-        System.out.println("Turn: " + current.getColor()
-                + " — " + phase.name());
+        System.out.println("Turn: " + current.getColor() + " — " + phase.name());
     }
 
 }

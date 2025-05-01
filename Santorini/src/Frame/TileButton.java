@@ -8,9 +8,9 @@ import java.awt.event.ActionListener;
 public class TileButton extends JButton {
 
     private final Tile tile;
-    private final GameController controller; // new
+    private final Controller controller;
 
-    public TileButton(Tile tile, GameController controller) {
+    public TileButton(Tile tile, Controller controller) {
         this.tile = tile;
         this.controller = controller;
         updateAppearance();
