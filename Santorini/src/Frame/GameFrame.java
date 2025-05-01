@@ -17,25 +17,46 @@ public class GameFrame extends JFrame {
     private final TileButton[][] buttons;
 
     public GameFrame(Board board, GameController controller) {
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        double width = screenSize.getWidth();
+        double height = screenSize.getHeight();
         setTitle("Santorini");
-        setSize(1000, 800);
-        setContentPane(new ImagePanel("../src/assets/startscreen.jpg"));
+        setSize(screenSize);
+        //setExtendedState(JFrame.MAXIMIZED_BOTH);
+        //background.setLayout(new FlowLayout(FlowLayout.CENTER));
+        //JPanel panel = new JPanel();
+        //panel.setSize((int) (width), (int) (height));
+
         int rows = board.getRows(), cols = board.getCols();
         buttons = new TileButton[rows][cols];
-        setLayout(new GridLayout(rows, cols));
+        setLayout(new BorderLayout());
+        ImagePanel centeredPanel = new ImagePanel("C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/gameboard.jpg");
+        centeredPanel.setLayout(new BoxLayout(centeredPanel, BoxLayout.Y_AXIS));
+        JPanel contentPanel = new JPanel();
+        contentPanel.setOpaque(false);
+        contentPanel.setBackground(new Color(0, 0, 0, 0));
+        contentPanel.setMinimumSize(new Dimension(400, 200)); // Set minimum height
+        contentPanel.setPreferredSize(screenSize);
+        contentPanel.setLayout(new GridLayout(rows, cols));// Set preferred height
+
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 // Load the image
-                ImageIcon icon = new ImageIcon("../src/assets/tile_blank.png");
+                ImageIcon icon = new ImageIcon("C:/Users/colli/Monash/git/fit3077/project/Santorini/src/assets/tile_blank.png");
                 TileButton newButton = new TileButton(board.getTile(r, c), controller, icon);
                 // Remove default button styling (optional)
                 newButton.setBorderPainted(false);
                 newButton.setFocusPainted(false);
                 newButton.setContentAreaFilled(false);
                 buttons[r][c] = newButton;
-                add(buttons[r][c]);
+                contentPanel.add(buttons[r][c]);
             }
         }
+        centeredPanel.add(Box.createVerticalGlue());
+        centeredPanel.add(contentPanel);
+        centeredPanel.add(Box.createVerticalGlue());
+        add(centeredPanel, BorderLayout.CENTER);
+        //background.add(panel);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setVisible(true);
