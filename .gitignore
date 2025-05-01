@@ -1,9 +1,4 @@
-/.idea
-/out
-/.idea/misc.xml
-*.xml
-out/production/Santorini/Main.class
-out/production/Santorini/Frame/TileButton.class
-out/production/Santorini/Frame/Tile.class
-out/production/Santorini/Frame/GameFrame.class
-.idea/misc.xml
+.idea
+out
+/Santorini/.idea
+/Santorini/out

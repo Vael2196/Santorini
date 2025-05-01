@@ -5,6 +5,8 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/Santorini/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/sprint_one/Prototype/Lynn/RestaurantBooking/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/Santorini/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/Santorini/out" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
