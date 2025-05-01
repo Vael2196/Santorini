@@ -3,6 +3,7 @@
 import Frame.Boards.Board;
 import Frame.GameController;
 import Frame.GameFrame;
+import Frame.GodPowerController;
 import GameEntities.Gods.Artemis;
 import GameEntities.Gods.Demeter;
 import GameEntities.Player;
@@ -51,8 +52,8 @@ public class StartingScreen {
 
             Player p1 = new Player("Blue");
             Player p2 = new Player("Red");
-            p1.setGodCard(new Artemis());
-            p2.setGodCard(new Demeter());
+            p1.setGodPower(new Artemis());
+            p2.setGodPower(new Demeter());
 
             Worker w1 = new Worker(p1, board.getTile(0,0));
             Worker w2 = new Worker(p1, board.getTile(0,1));
@@ -64,9 +65,12 @@ public class StartingScreen {
             p2.addWorker(w4);
 
             List<Player> players = Arrays.asList(p1, p2);
-            GameController controller = new GameController(board, null, players);
-            GameFrame frame = new GameFrame(board, controller);
-            controller.setFrame(frame);
+            GameController coreController = new GameController(board, null, players);
+            GodPowerController godController = new GodPowerController(coreController, players);
+
+            GameFrame frame = new GameFrame(board, godController);
+            coreController.setFrame(frame);
+            godController.setFrame(frame);
 
             SwingUtilities.invokeLater(() -> {});
         });
