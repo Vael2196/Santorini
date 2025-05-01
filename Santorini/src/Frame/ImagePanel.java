@@ -17,6 +17,10 @@ public class ImagePanel extends JPanel {
         }
     }
 
+    public ImagePanel(ImageIcon icon) {
+        this.image = icon.getImage();
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);

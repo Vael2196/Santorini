@@ -10,28 +10,34 @@ import GameEntities.Gods.Demeter;
 import GameEntities.Player;
 import GameEntities.Worker;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
 
 public class StartingScreen {
 
-    private static final String STARTSCREEN = "../project/Santorini/src/assets/startscreen.jpg";
+    private static final String STARTSCREEN = "/assets/startscreen.jpg";
 
     public static void main(String[] args) {
         JFrame startingFrame = new JFrame();
-        JPanel imgPanel = new ImagePanel(STARTSCREEN);
+        URL url = StartingScreen.class.getResource(STARTSCREEN);
+        ImageIcon icon = new ImageIcon(url);
+        JPanel imgPanel = new ImagePanel(icon);
         startingFrame.setVisible(true);
         startingFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         startingFrame.setSize(500, 500);
         startingFrame.setTitle("Santorini Board Game");
         //startingFrame.getContentPane().setBackground(STARTSCREEN);
         startingFrame.setLocationRelativeTo(null);
-        startingFrame.add(imgPanel);
+        startingFrame.setContentPane(imgPanel);
 
         Border border = BorderFactory.createLineBorder(new Color(135, 206, 235));
 
