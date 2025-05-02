@@ -50,7 +50,7 @@ public class TileButton extends JButton {
         if (super.getIcon() instanceof ImageIcon) {
             ImageIcon imgIcon = (ImageIcon) super.getIcon();
             Image img = imgIcon.getImage();
-            Image newimg = img.getScaledInstance( 115, 115,  java.awt.Image.SCALE_SMOOTH ) ;
+            Image newimg = img.getScaledInstance( 105, 105,  java.awt.Image.SCALE_SMOOTH ) ;
             imgIcon = new ImageIcon( newimg );
             return imgIcon;
         } else {

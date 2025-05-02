@@ -46,22 +46,21 @@ public class StartingScreen {
         textLabel.setFont(new Font("Arial", Font.BOLD, 24));
         textLabel.setBounds(50, 150, 400, 100);
         //textLabel.setBorder(border);
-        textLabel.setHorizontalAlignment(JLabel.LEFT);
         textLabel.setVerticalAlignment(JLabel.TOP);
         startingFrame.add(textLabel);
 
         JButton startButton = new JButton("Start");
-        startButton.setBounds(200, 350, 100, 50);
+        startButton.setBounds((int) (Toolkit.getDefaultToolkit().getScreenSize().getWidth()*0.5), (int) (Toolkit.getDefaultToolkit().getScreenSize().getHeight()*0.75) + 100,100,50);
+        startButton.setBorderPainted(false);
+        startButton.setBackground(new Color(0, 0, 0, 0));
         //startButton.setBounds(200, 400, 100, 50);
-        startButton.setAlignmentX(50);
-        startButton.setAlignmentY((float) (Toolkit.getDefaultToolkit().getScreenSize().getHeight() - 100));
-        startingFrame.add(startButton);
+        textLabel.add(startButton);
 
         JButton exitButton =  new JButton("Exit");
-        exitButton.setBounds(200,400,100,50);
-        startButton.setAlignmentX(50);
-        startButton.setAlignmentY((float) (Toolkit.getDefaultToolkit().getScreenSize().getHeight()));
-        startingFrame.add(exitButton);
+        exitButton.setBounds((int) (Toolkit.getDefaultToolkit().getScreenSize().getWidth()*0.5), (int) (Toolkit.getDefaultToolkit().getScreenSize().getHeight()*0.75),100,50);
+        exitButton.setBorderPainted(false);
+        exitButton.setBackground(new Color(0, 0, 0, 0));
+        textLabel.add(exitButton);
 
         startButton.addActionListener( a ->{
             Board board = Board.createSquare(5);

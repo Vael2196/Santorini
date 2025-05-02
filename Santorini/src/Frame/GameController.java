@@ -100,6 +100,7 @@ public class GameController implements Controller {
             selectedWorker = tile.getOccupant();
             phase = Phase.MOVE;
             tile.setSelected(true);
+            frame.updateLabels(phase, currentPlayerIndex);
         } else {
             JOptionPane.showMessageDialog(frame, "Invalid selection!");
         }
@@ -111,6 +112,7 @@ public class GameController implements Controller {
             performMove(selectedWorker, tile);
             phase = Phase.BUILD;
             tile.setSelected(false);
+            frame.updateLabels(phase, currentPlayerIndex);
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(frame, e.getMessage());
         }

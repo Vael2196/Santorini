@@ -31,9 +31,15 @@ public class GodPowerController implements Controller {
             case SETUP -> {
                 core.handleSetup(current, tile);
                 if (current.getWorkers().getLast().getCurrentTile() != null) {
-                    endTurn();
                     if (players.getFirst() == current) {
+                        power.resetTurn();
+                        core.endTurn();
+                        idx = (idx + 1) % players.size();
+                        power = players.get(idx).getGodPower();
                         core.setPhase(GameController.Phase.SETUP);
+                        core.getFrame().updateLabels(core.getPhase(), idx);
+                    } else {
+                        endTurn();
                     }
                 }
             }
@@ -48,8 +54,10 @@ public class GodPowerController implements Controller {
                     core.performMove(w, tile);
                     power.afterMove(w, origin, tile);
                     tile.setSelected(false);
+                    core.getFrame().updateLabels(core.getPhase(), idx);
                     if (!power.canMoveAgain()) {
                         core.setPhase(GameController.Phase.BUILD);
+                        core.getFrame().updateLabels(core.getPhase(), idx);
                     }
                 } catch (IllegalArgumentException ex) {
                     JOptionPane.showMessageDialog(core.getFrame(), ex.getMessage());
@@ -63,6 +71,7 @@ public class GodPowerController implements Controller {
                     core.performBuild(w, tile);
                     power.afterBuild(w, tile);
                     tile.setSelected(false);
+                    core.getFrame().updateLabels(core.getPhase(), idx);
                     if (!power.canBuildAgain()) {
                         endTurn();
                     }
@@ -80,6 +89,7 @@ public class GodPowerController implements Controller {
         core.endTurn();
         idx = (idx + 1) % players.size();
         power = players.get(idx).getGodPower();
+        core.getFrame().updateLabels(core.getPhase(), idx);
     }
 
     private void announcePhase() {

@@ -102,8 +102,8 @@ public class GameFrame extends JFrame {
         setVisible(true);
     }
 
-    public void updateLabels(GameController.Phase phase, Player player) {
-        String playerString = (Objects.equals(player.getColor(), "Blue"))? "Player 1's Turn" : "Player 2's Turn";
+    public void updateLabels(GameController.Phase phase, int playerIndex) {
+        String playerString = (playerIndex == 0)? "Player 1's Turn" : "Player 2's Turn";
         switch (phase) {
             case SETUP -> infoLabel.setText("Place your workers in any 2 empty tiles.\n \n" + playerString);
             case SELECT -> infoLabel.setText("Select one of your workers.\n \n" + playerString);
