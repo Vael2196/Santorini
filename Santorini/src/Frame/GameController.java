@@ -7,6 +7,9 @@ import Frame.Boards.*;
 import javax.swing.*;
 import java.util.List;
 
+/**
+ * Controller level class that contains the core game logic for a game of Santorini (no GodPowers included)
+ */
 public class GameController implements Controller {
 
     public enum Phase {SETUP, SELECT, MOVE, BUILD}
@@ -18,6 +21,12 @@ public class GameController implements Controller {
     private Phase phase;
     private Worker selectedWorker;
 
+    /**
+     * Constructor method
+     * @param board
+     * @param frame
+     * @param players
+     */
     public GameController(Board board, GameFrame frame, List<Player> players) {
         this.board = board;
         this.frame = frame;
@@ -67,6 +76,12 @@ public class GameController implements Controller {
         return selectedWorker;
     }
 
+    /**
+     * The execution logic of movement.
+     * Use handleMove instead in case you want to add some leeway to the logic or validateMove to modify any restrictions
+     * @param w
+     * @param dest
+     */
     public void performMove(Worker w, Tile dest) {
         Tile origin = w.getCurrentTile();
         validateMove(w, dest);
@@ -74,6 +89,12 @@ public class GameController implements Controller {
         checkWin(origin, dest, w.getPlayer());
     }
 
+    /**
+     * The execution logic of building.
+     * Use handleBuild instead in case you want to add some leeway to the logic or validateBuild to modify any restrictions
+     * @param w
+     * @param dest
+     */
     public void performBuild(Worker w, Tile dest) {
         validateBuild(w, dest);
         w.build(dest);
@@ -95,6 +116,11 @@ public class GameController implements Controller {
         announcePhase();
     }
 
+    /**
+     * Worker selection logic
+     * @param current
+     * @param tile
+     */
     protected void handleSelect(Player current, Tile tile) {
         if (tile.getOccupant() != null && tile.getOccupant().getPlayer() == current) {
             selectedWorker = tile.getOccupant();
@@ -107,7 +133,20 @@ public class GameController implements Controller {
         announcePhase();
     }
 
+    /**
+     * A complete method to execute the move mechanics all together.
+     * Just call this one if you don't know what you are doing
+     * @param current
+     * @param tile
+     */
     private void handleMove(Player current, Tile tile) {
+        if (selectedWorker != null && tile == selectedWorker.getCurrentTile()) {
+            selectedWorker = null;
+            phase = Phase.SELECT;
+            JOptionPane.showMessageDialog(frame, "Worker deselected. Select another worker.");
+            announcePhase();
+            return;
+        }
         try {
             performMove(selectedWorker, tile);
             phase = Phase.BUILD;
@@ -119,6 +158,12 @@ public class GameController implements Controller {
         announcePhase();
     }
 
+    /**
+     * Does all the parts of building logic all together.
+     * Preferably use this one if given a choice
+     * @param current
+     * @param tile
+     */
     private void handleBuild(Player current, Tile tile) {
         try {
             performBuild(selectedWorker, tile);
@@ -130,12 +175,20 @@ public class GameController implements Controller {
         announcePhase();
     }
 
+    /**
+     * Cycle through players and clear all the leftover data
+     */
     protected void endTurn() {
         phase = Phase.SELECT;
         selectedWorker = null;
         currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
     }
 
+    /**
+     * Self-explanatory. Move restrictions and validation
+     * @param w
+     * @param target
+     */
     private void validateMove(Worker w, Tile target) {
         Tile origin = w.getCurrentTile();
         if (target.isOccupied() || target.getBuilding().hasDome())
@@ -150,6 +203,11 @@ public class GameController implements Controller {
             throw new IllegalArgumentException("Can only move to adjacent tiles");
     }
 
+    /**
+     * Self-explanatory. Build restrictions and validation
+     * @param w
+     * @param target
+     */
     private void validateBuild(Worker w, Tile target) {
         Tile origin = w.getCurrentTile();
         if (target.isOccupied() || target.getBuilding().hasDome())
@@ -159,6 +217,12 @@ public class GameController implements Controller {
             throw new IllegalArgumentException("Can only build on adjacent tiles");
     }
 
+    /**
+     * Checks whether the player has achieved the winning conditions or is yet to do so
+     * @param origin
+     * @param dest
+     * @param player
+     */
     private void checkWin(Tile origin, Tile dest, Player player) {
         int oLevel = origin.getBuilding().getLevel();
         int nLevel = dest.getBuilding().getLevel();
@@ -169,7 +233,9 @@ public class GameController implements Controller {
         }
     }
 
-    /** Prints current player and phase to console (currently for testing purposes only) **/
+    /**
+     * Prints current player and phase to console
+     **/
     protected void announcePhase() {
         Player current = players.get(currentPlayerIndex);
         System.out.println("Turn: " + current.getColor() + " — " + phase.name());
