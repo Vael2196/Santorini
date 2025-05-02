@@ -14,7 +14,9 @@ import GameEntities.Worker;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.net.URL;
@@ -40,13 +42,13 @@ public class StartingScreen {
         startingFrame.setLocationRelativeTo(null);
         startingFrame.setContentPane(imgPanel);
 
-        //Border border = BorderFactory.createLineBorder(new Color(135, 206, 235));
+        Border border = BorderFactory.createLineBorder(new Color(135, 206, 235));
 
         JLabel textLabel = new JLabel("Santorini Board Game");
         textLabel.setForeground(new Color(0, 60, 90));
         textLabel.setFont(new Font("Arial", Font.BOLD, 24));
         textLabel.setBounds(50, 150, 400, 100);
-        //textLabel.setBorder(border);
+        textLabel.setBorder(border);
         textLabel.setVerticalAlignment(JLabel.TOP);
         startingFrame.add(textLabel);
 
@@ -92,10 +94,10 @@ public class StartingScreen {
             Board board = Board.createSquare(5);
 
             //Create and add workers to players
-            p1.addWorker(new Worker(p1, board.getTile(0,0)));
-            p1.addWorker(new Worker(p1, board.getTile(0,1)));
-            p2.addWorker(new Worker(p2, board.getTile(4,4)));
-            p2.addWorker(new Worker(p2, board.getTile(4,3)));
+            p1.addWorker(new Worker(p1));
+            p1.addWorker(new Worker(p1));
+            p2.addWorker(new Worker(p2));
+            p2.addWorker(new Worker(p2));
 
             GameController coreController = new GameController(board, null, players);
             GodPowerController godController = new GodPowerController(coreController, players);
