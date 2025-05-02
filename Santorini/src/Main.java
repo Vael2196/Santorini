@@ -9,9 +9,9 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        Board board   = Board.createSquare(5);
-        Player p1     = new Player("Blue");
-        Player p2     = new Player("Red");
+        Board board = Board.createSquare(5);
+        Player p1 = new Player("Blue");
+        Player p2 = new Player("Red");
         p1.setGodPower(new Artemis());
         p2.setGodPower(new Demeter());
 

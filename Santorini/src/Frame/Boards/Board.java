@@ -3,8 +3,7 @@ package Frame.Boards;
 import Frame.Tile;
 
 /**
- * A dummy of the board. My idea is to split it up eventually into Board being abstract,
- * the current code is gonna move to RectangleBoard, and I leave the rest up to your imagination
+ * A dummy of the board
  */
 public abstract class Board {
     protected final Tile[][] tiles;

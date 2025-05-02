@@ -86,6 +86,13 @@ public class GameController implements Controller {
     }
 
     private void handleMove(Player current, Tile tile) {
+        if (selectedWorker != null && tile == selectedWorker.getCurrentTile()) {
+            selectedWorker = null;
+            phase = Phase.SELECT;
+            JOptionPane.showMessageDialog(frame, "Worker deselected. Select another worker.");
+            announcePhase();
+            return;
+        }
         try {
             performMove(selectedWorker, tile);
             phase = Phase.BUILD;
