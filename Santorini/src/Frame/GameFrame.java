@@ -20,11 +20,6 @@ public class GameFrame extends JFrame {
 
     public GameFrame(Board board, Controller controller) {
         Dimension screenSize = new Dimension(1215, 865);
-        if (screenSize.getHeight() > Toolkit.getDefaultToolkit().getScreenSize().getHeight() || screenSize.getWidth() > Toolkit.getDefaultToolkit().getScreenSize().getWidth()) {
-            screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        }
-        double width = screenSize.getWidth();
-        double height = screenSize.getHeight();
         setTitle("Santorini");
         setSize(screenSize);
         setResizable(false);

@@ -42,29 +42,29 @@ public class StartingScreen {
         startingFrame.setLocationRelativeTo(null);
         startingFrame.setContentPane(imgPanel);
 
-        Border border = BorderFactory.createLineBorder(new Color(135, 206, 235));
-
         JLabel textLabel = new JLabel("Santorini Board Game");
         textLabel.setForeground(new Color(0, 60, 90));
         textLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        textLabel.setBounds(50, 150, 400, 100);
-        textLabel.setBorder(border);
+        textLabel.setBounds(50, 20, 400, 50);
         textLabel.setVerticalAlignment(JLabel.TOP);
+        textLabel.setHorizontalAlignment(JLabel.CENTER);
         startingFrame.add(textLabel);
 
         JButton startButton = new JButton("Start");
-        startButton.setBounds(200, 350, 100, 50);
+        startButton.setBounds(200, 335, 100, 50);
         startButton.setBorderPainted(false);
         startButton.setBackground(new Color(0, 0, 0, 0));
         startButton.setOpaque(false);
+        startButton.setFont(new Font("Arial", Font.BOLD, 20));
         //startButton.setBounds(200, 400, 100, 50);
         imgPanel.add(startButton);
 
         JButton exitButton =  new JButton("Exit");
-        exitButton.setBounds(200,400,100,50);
+        exitButton.setBounds(200,390,100,50);
         exitButton.setBorderPainted(false);
         exitButton.setBackground(new Color(0, 0, 0, 0));
         exitButton.setOpaque(false);
+        exitButton.setFont(new Font("Arial", Font.BOLD, 20));
         imgPanel.add(exitButton);
 
         startButton.addActionListener( a ->{
