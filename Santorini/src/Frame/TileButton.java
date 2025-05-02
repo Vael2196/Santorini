@@ -6,6 +6,7 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.URL;
 
 
 public class TileButton extends JButton {
@@ -13,22 +14,22 @@ public class TileButton extends JButton {
     private final Tile tile;
     private final Controller controller;
 
-    private final String LEVEL0 = "../project/Santorini/src/assets/level0.png";
-    private final String LEVEL0_P1 = "../project/Santorini/src/assets/level0_p1.png";
-    private final String LEVEL0_P2 = "../project/Santorini/src/assets/level0_p2.png";
-    private final String LEVEL0_DOME = "../project/Santorini/src/assets/level0_dome.png";
-    private final String LEVEL1 = "../project/Santorini/src/assets/level1.png";
-    private final String LEVEL1_P1 = "../project/Santorini/src/assets/level1_p1.png";
-    private final String LEVEL1_P2 = "../project/Santorini/src/assets/level1_p2.png";
-    private final String LEVEL1_DOME = "../project/Santorini/src/assets/level1_dome.png";
-    private final String LEVEL2 = "../project/Santorini/src/assets/level2.png";
-    private final String LEVEL2_P1 = "../project/Santorini/src/assets/level2_p1.png";
-    private final String LEVEL2_P2 = "../project/Santorini/src/assets/level2_p2.png";
-    private final String LEVEL2_DOME = "../project/Santorini/src/assets/level2_dome.png";
-    private final String LEVEL3 = "../project/Santorini/src/assets/level3.png";
-    private final String LEVEL3_P1 = "../project/Santorini/src/assets/level3_p1.png";
-    private final String LEVEL3_P2 = "../project/Santorini/src/assets/level3_p2.png";
-    private final String LEVEL3_DOME = "../project/Santorini/src/assets/level3_dome.png";
+    private final String LEVEL0 = "/assets/level0.png";
+    private final String LEVEL0_P1 = "/assets/level0_p1.png";
+    private final String LEVEL0_P2 = "/assets/level0_p2.png";
+    private final String LEVEL0_DOME = "/assets/level0_dome.png";
+    private final String LEVEL1 = "/assets/level1.png";
+    private final String LEVEL1_P1 = "/assets/level1_p1.png";
+    private final String LEVEL1_P2 = "/assets/level1_p2.png";
+    private final String LEVEL1_DOME = "/assets/level1_dome.png";
+    private final String LEVEL2 = "/assets/level2.png";
+    private final String LEVEL2_P1 = "/assets/level2_p1.png";
+    private final String LEVEL2_P2 = "/assets/level2_p2.png";
+    private final String LEVEL2_DOME = "/assets/level2_dome.png";
+    private final String LEVEL3 = "/assets/level3.png";
+    private final String LEVEL3_P1 = "/assets/level3_p1.png";
+    private final String LEVEL3_P2 = "/assets/level3_p2.png";
+    private final String LEVEL3_DOME = "/assets/level3_dome.png";
 
 
 
@@ -121,7 +122,8 @@ public class TileButton extends JButton {
             default:
                 iconPath = LEVEL0;
         }
-        this.setIcon(new ImageIcon(iconPath));
+        URL url = TileButton.class.getResource(iconPath);
+        this.setIcon(new ImageIcon(url));
         //TODO: Set background color based on occupant
     }
 }

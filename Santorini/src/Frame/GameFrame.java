@@ -6,6 +6,7 @@ import GameEntities.Player;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.net.URL;
 import java.util.Objects;
 
 /**
@@ -14,7 +15,7 @@ import java.util.Objects;
 public class GameFrame extends JFrame {
     private final TileButton[][] buttons;
     private final BackgroundLabel[][] backLabels;
-    private static final String GAMEBOARD = "../project/Santorini/src/assets/gameboard.jpg";
+    private static final String GAMEBOARD = "/assets/gameboard.jpg";
     private JTextArea infoLabel;
 
     public GameFrame(Board board, Controller controller) {
@@ -28,7 +29,8 @@ public class GameFrame extends JFrame {
         setSize(screenSize);
         setResizable(false);
 
-        JPanel centeredPanel = new ImagePanel(GAMEBOARD);
+        URL url = GameFrame.class.getResource(GAMEBOARD);
+        JPanel centeredPanel = new ImagePanel(new ImageIcon(url));
         JPanel content;
         centeredPanel.setLayout(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
