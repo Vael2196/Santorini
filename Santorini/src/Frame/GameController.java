@@ -144,6 +144,7 @@ public class GameController implements Controller {
             selectedWorker = null;
             phase = Phase.SELECT;
             JOptionPane.showMessageDialog(frame, "Worker deselected. Select another worker.");
+            frame.updateLabels(phase, currentPlayerIndex);
             announcePhase();
             return;
         }

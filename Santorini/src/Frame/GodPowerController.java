@@ -61,6 +61,7 @@ public class GodPowerController implements Controller {
                 if (sel != null && tile == sel.getCurrentTile() && !moveExecuted) {
                     core.setPhase(GameController.Phase.SELECT);
                     JOptionPane.showMessageDialog(core.getFrame(),"Selection canceled. Choose a worker.");
+                    core.getFrame().updateLabels(core.getPhase(), idx);
                     break;
                 }
                 try {
