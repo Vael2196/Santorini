@@ -19,6 +19,7 @@ public class ImagePanel extends JPanel {
 
     public ImagePanel(ImageIcon icon) {
         this.image = icon.getImage();
+        setLayout(null);
     }
 
     @Override
