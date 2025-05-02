@@ -7,6 +7,7 @@ import Frame.GodPowerController;
 import Frame.ImagePanel;
 import GameEntities.Gods.Artemis;
 import GameEntities.Gods.Demeter;
+import GameEntities.Gods.GodPower;
 import GameEntities.Player;
 import GameEntities.Worker;
 
@@ -18,8 +19,8 @@ import java.awt.Font;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.function.Supplier;
 
 
 public class StartingScreen {
@@ -53,30 +54,46 @@ public class StartingScreen {
         JButton startButton = new JButton("Start");
         startButton.setBounds(200, 350, 100, 50);
         //startButton.setBounds(200, 400, 100, 50);
-        textLabel.add(startButton);
+        imgPanel.add(startButton);
 
         JButton exitButton =  new JButton("Exit");
         exitButton.setBounds(200,400,100,50);
-        textLabel.add(exitButton);
+        imgPanel.add(exitButton);
 
         startButton.addActionListener( a ->{
-            Board board = Board.createSquare(5);
+            Map<String, Supplier<GodPower>> godMap = new LinkedHashMap<>();
+            godMap.put("Artemis", Artemis::new);
+            godMap.put("Demeter", Demeter::new);
+
+            List<String> choices = new ArrayList<>();
+            choices.add("Random");
+            choices.addAll(godMap.keySet());
+
+            Random rand = new Random();
 
             Player p1 = new Player("Blue");
             Player p2 = new Player("Red");
-            p1.setGodPower(new Artemis());
-            p2.setGodPower(new Demeter());
-
-            Worker w1 = new Worker(p1, board.getTile(0,0));
-            Worker w2 = new Worker(p1, board.getTile(0,1));
-            p1.addWorker(w1);
-            p1.addWorker(w2);
-            Worker w3 = new Worker(p2, board.getTile(4,4));
-            Worker w4 = new Worker(p2, board.getTile(4,3));
-            p2.addWorker(w3);
-            p2.addWorker(w4);
-
             List<Player> players = Arrays.asList(p1, p2);
+
+            for (Player p : players) {
+                String selected = (String) JOptionPane.showInputDialog(null, p.getColor() + " — select your God power:", "God Selection", JOptionPane.PLAIN_MESSAGE, null, choices.toArray(), choices.get(0));
+
+                if (selected == null || selected.equals("Random")) {
+                    List<String> names = new ArrayList<>(godMap.keySet());
+                    selected = names.get(rand.nextInt(names.size()));
+                }
+                Supplier<GodPower> sup = godMap.get(selected);
+                p.setGodPower(sup.get());
+            }
+
+            Board board = Board.createSquare(5);
+
+            //Create and add workers to players
+            p1.addWorker(new Worker(p1, board.getTile(0,0)));
+            p1.addWorker(new Worker(p1, board.getTile(0,1)));
+            p2.addWorker(new Worker(p2, board.getTile(4,4)));
+            p2.addWorker(new Worker(p2, board.getTile(4,3)));
+
             GameController coreController = new GameController(board, null, players);
             GodPowerController godController = new GodPowerController(coreController, players);
 
