@@ -6,6 +6,9 @@ import GameEntities.Gods.GodPower;
 import javax.swing.*;
 import java.util.List;
 
+/**
+ * Game logic to run a game of Santorini with God power modifiers
+ */
 public class GodPowerController implements Controller {
     private final GameController core;
     private final List<Player> players;
@@ -13,6 +16,11 @@ public class GodPowerController implements Controller {
     private GodPower power;
     private boolean moveExecuted;
 
+    /**
+     * Constructor method
+     * @param core Contains the core game logic, like move and build
+     * @param players
+     */
     public GodPowerController(GameController core, List<Player> players) {
         this.core = core;
         this.players = players;
@@ -74,6 +82,9 @@ public class GodPowerController implements Controller {
         announcePhase();
     }
 
+    /**
+     * Cycle through players and clear all the leftover data
+     */
     private void endTurn() {
         power.resetTurn();
         core.endTurn();
@@ -82,6 +93,9 @@ public class GodPowerController implements Controller {
         moveExecuted = false;
     }
 
+    /**
+     * Prints current player and phase to console
+     **/
     private void announcePhase() {
         Player p = players.get(idx);
         var phase = core.getPhase();

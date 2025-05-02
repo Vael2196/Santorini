@@ -4,7 +4,8 @@ import GameEntities.*;
 import Frame.*;
 
 /**
- * Call before or/and after move and build phases
+ * A skeleton that defines the common behaviour of all the God cards/powers
+ * An attempt to turn the God powers into a Strategy pattern.
  **/
 public interface GodPower {
     String getName();
