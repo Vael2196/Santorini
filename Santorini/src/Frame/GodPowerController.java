@@ -28,6 +28,16 @@ public class GodPowerController implements Controller {
         Player current = players.get(idx);
 
         switch (core.getPhase()) {
+            case SETUP -> {
+                core.handleSetup(current, tile);
+                if (current.getWorkers().getLast().getCurrentTile() != null) {
+                    endTurn();
+                    if (players.getFirst() == current) {
+                        core.setPhase(GameController.Phase.SETUP);
+                    }
+                }
+            }
+
             case SELECT -> core.handleSelect(current, tile);
 
             case MOVE -> {
@@ -37,7 +47,7 @@ public class GodPowerController implements Controller {
                     power.beforeMove(w, tile);
                     core.performMove(w, tile);
                     power.afterMove(w, origin, tile);
-
+                    tile.setSelected(false);
                     if (!power.canMoveAgain()) {
                         core.setPhase(GameController.Phase.BUILD);
                     }
@@ -52,7 +62,7 @@ public class GodPowerController implements Controller {
                     power.beforeBuild(w, tile);
                     core.performBuild(w, tile);
                     power.afterBuild(w, tile);
-
+                    tile.setSelected(false);
                     if (!power.canBuildAgain()) {
                         endTurn();
                     }

@@ -18,6 +18,11 @@ public class Worker {
         startTile.setOccupant(this);
     }
 
+    public Worker(Player player) {
+        this.player = player;
+        this.currentTile = null;
+    }
+
     public Player getPlayer() { return player; }
     public Tile getCurrentTile() { return currentTile; }
 
@@ -26,6 +31,11 @@ public class Worker {
         currentTile.removeOccupant();
         target.setOccupant(this);
         currentTile = target;
+    }
+
+    public void setStartingTile(Tile target) {
+        currentTile = target;
+        currentTile.setOccupant(this);
     }
 
     /** Builds on an adjacent tile **/

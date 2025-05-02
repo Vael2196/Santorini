@@ -9,20 +9,21 @@ import java.util.List;
 
 public class GameController implements Controller {
 
-    enum Phase {SELECT, MOVE, BUILD}
+    public enum Phase {SETUP, SELECT, MOVE, BUILD}
 
     private final Board board;
     private GameFrame frame;
     private final List<Player> players;
     private int currentPlayerIndex = 0;
-    private Phase phase = Phase.SELECT;
+    private Phase phase;
     private Worker selectedWorker;
 
     public GameController(Board board, GameFrame frame, List<Player> players) {
         this.board = board;
         this.frame = frame;
         this.players = players;
-        announcePhase();
+        phase = Phase.SETUP;
+        //announcePhase();
     }
 
     @Override
@@ -34,6 +35,9 @@ public class GameController implements Controller {
     public void onTileClicked(Tile tile) {
         Player current = players.get(currentPlayerIndex);
         switch (phase) {
+            case SETUP:
+                handleSetup(current, tile);
+                break;
             case SELECT:
                 handleSelect(current, tile);
                 break;
@@ -75,10 +79,27 @@ public class GameController implements Controller {
         w.build(dest);
     }
 
+    protected void handleSetup(Player current, Tile tile) {
+        if (tile.getOccupant() == null) {
+            Worker worker1 = current.getWorkers().getFirst();
+            Worker worker2 = current.getWorkers().getLast();
+            if (worker1.getCurrentTile() == null) {
+                worker1.setStartingTile(tile);
+            } else if (worker2.getCurrentTile() == null) {
+                worker2.setStartingTile(tile);
+            }
+
+        } else {
+            JOptionPane.showMessageDialog(frame, "Invalid selection!");
+        }
+        announcePhase();
+    }
+
     protected void handleSelect(Player current, Tile tile) {
         if (tile.getOccupant() != null && tile.getOccupant().getPlayer() == current) {
             selectedWorker = tile.getOccupant();
             phase = Phase.MOVE;
+            tile.setSelected(true);
         } else {
             JOptionPane.showMessageDialog(frame, "Invalid selection!");
         }
@@ -89,6 +110,7 @@ public class GameController implements Controller {
         try {
             performMove(selectedWorker, tile);
             phase = Phase.BUILD;
+            tile.setSelected(false);
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(frame, e.getMessage());
         }
@@ -98,6 +120,7 @@ public class GameController implements Controller {
     private void handleBuild(Player current, Tile tile) {
         try {
             performBuild(selectedWorker, tile);
+            tile.setSelected(false);
             endTurn();
         } catch (IllegalArgumentException e) {
             JOptionPane.showMessageDialog(frame, e.getMessage());

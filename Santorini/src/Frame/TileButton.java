@@ -1,6 +1,8 @@
 package Frame;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,12 +36,12 @@ public class TileButton extends JButton {
         super();
         this.tile = tile;
         this.controller = controller;
-        setBorderPainted(true);
+        setBorder(new LineBorder(Color.WHITE, 10));
         setFocusPainted(false);
         setContentAreaFilled(false);
-        setSize(new Dimension(70, 100));
+        setSize(new Dimension(125, 125));
         updateAppearance();
-        addActionListener(e -> controller.onTileClicked(tile));
+        addActionListener(e -> controller.onTileClicked(this.tile));
         //setIcon(new ImageIcon(LEVEL0_P1));
     }
 
@@ -48,7 +50,7 @@ public class TileButton extends JButton {
         if (super.getIcon() instanceof ImageIcon) {
             ImageIcon imgIcon = (ImageIcon) super.getIcon();
             Image img = imgIcon.getImage();
-            Image newimg = img.getScaledInstance( 100, 100,  java.awt.Image.SCALE_SMOOTH ) ;
+            Image newimg = img.getScaledInstance( 115, 115,  java.awt.Image.SCALE_SMOOTH ) ;
             imgIcon = new ImageIcon( newimg );
             return imgIcon;
         } else {

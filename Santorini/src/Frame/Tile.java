@@ -7,12 +7,14 @@ public class Tile {
     private final int x, y;
     private Building building;
     private Worker occupant;
+    private boolean isSelected;
 
     public Tile(int x, int y) {
         this.x = x;
         this.y = y;
         this.building = new Building();
         this.occupant = null;
+        this.isSelected = false;
     }
 
     public int getX() {
@@ -21,6 +23,14 @@ public class Tile {
 
     public int getY() {
         return y;
+    }
+
+    public boolean isSelected() {
+        return isSelected;
+    }
+
+    public void setSelected(boolean selected) {
+        isSelected = selected;
     }
 
     public Building getBuilding() {
