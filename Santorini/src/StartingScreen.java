@@ -56,6 +56,7 @@ public class StartingScreen {
         startButton.setBounds(200, 350, 100, 50);
         startButton.setBorderPainted(false);
         startButton.setBackground(new Color(0, 0, 0, 0));
+        startButton.setOpaque(false);
         //startButton.setBounds(200, 400, 100, 50);
         imgPanel.add(startButton);
 
@@ -63,6 +64,7 @@ public class StartingScreen {
         exitButton.setBounds(200,400,100,50);
         exitButton.setBorderPainted(false);
         exitButton.setBackground(new Color(0, 0, 0, 0));
+        exitButton.setOpaque(false);
         imgPanel.add(exitButton);
 
         startButton.addActionListener( a ->{
