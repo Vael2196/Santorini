@@ -64,6 +64,15 @@ public class GodPowerController implements Controller {
                     core.getFrame().updateLabels(core.getPhase(), idx);
                     break;
                 }
+                if (power.canMoveAgain() && power.allowsVoluntaryStop()) {
+                    try {
+                        core.validateMove(sel, tile);
+                    } catch (IllegalArgumentException blocked) {
+                        core.setPhase(GameController.Phase.BUILD);
+                        core.getFrame().updateLabels(core.getPhase(), idx);
+                        return;
+                    }
+                }
                 try {
                     Worker w = core.getSelectedWorker();
                     Tile origin = w.getCurrentTile();

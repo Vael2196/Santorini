@@ -190,7 +190,7 @@ public class GameController implements Controller {
      * @param w
      * @param target
      */
-    private void validateMove(Worker w, Tile target) {
+    protected void validateMove(Worker w, Tile target) {
         Tile origin = w.getCurrentTile();
         if (target.isOccupied() || target.getBuilding().hasDome())
             throw new IllegalArgumentException("Destination blocked");
@@ -209,7 +209,7 @@ public class GameController implements Controller {
      * @param w
      * @param target
      */
-    private void validateBuild(Worker w, Tile target) {
+    protected void validateBuild(Worker w, Tile target) {
         Tile origin = w.getCurrentTile();
         if (target.isOccupied() || target.getBuilding().hasDome())
             throw new IllegalArgumentException("Cannot build here");

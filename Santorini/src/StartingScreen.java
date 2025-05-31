@@ -5,9 +5,7 @@ import Frame.GameController;
 import Frame.GameFrame;
 import Frame.GodPowerController;
 import Frame.ImagePanel;
-import GameEntities.Gods.Artemis;
-import GameEntities.Gods.Demeter;
-import GameEntities.Gods.GodPower;
+import GameEntities.Gods.*;
 import GameEntities.Player;
 import GameEntities.Worker;
 
@@ -71,6 +69,7 @@ public class StartingScreen {
             Map<String, Supplier<GodPower>> godMap = new LinkedHashMap<>();
             godMap.put("Artemis", Artemis::new);
             godMap.put("Demeter", Demeter::new);
+            godMap.put("Triton",  Triton::new);
 
             List<String> choices = new ArrayList<>();
             choices.add("Random");

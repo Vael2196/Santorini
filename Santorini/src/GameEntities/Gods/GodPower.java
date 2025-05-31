@@ -25,4 +25,5 @@ public interface GodPower {
         return false;
     }
 
+    default boolean allowsVoluntaryStop() { return false; }
 }
