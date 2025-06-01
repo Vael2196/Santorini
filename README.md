@@ -4,13 +4,13 @@ Greetings. This repo consists of all the files made by members of Tuesday04pm_Te
 including yours truly, Vadim Filyakin (not my proudest work, but I made all the features for the latest Sprint myself).
 
 Here is the list of features added throughout Sprint 3:
--Introducing a brand new god power into the game: Triton.
--The game now supports save snapshots and load features. 
+- Introducing a brand new god power into the game: Triton.
+- The game now supports save snapshots and load features. 
 (As a sidenote, due to some architectural inconsistencies in the way we designed the Controller classes, as of now, 
 Save feature only works in Standard mode. 
 Also, once the game has been booted up from a save file, the user need to double click on the board to continue since we are using enums for the game phase, 
 and there is no way around the select phase in the begining that doesn't involve me refractoring the whole thing).
--An 80% functional Game mode/Level/Map Editor. The users can access it by clickig the "Level Editor" button on the starting screen. 
+- An 80% functional Game mode/Level/Map Editor. The users can access it by clickig the "Level Editor" button on the starting screen. 
 Once they are done, they are to close and then reopen the application again to be able to enjoy the newly made game mode.
 While in the Editor, the users can do the following:
     -Click on the tiles they want to turn into holes. When clicked again, the tile reverts back to normal.
