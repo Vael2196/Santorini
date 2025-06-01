@@ -1,5 +1,8 @@
 package Frame;
 
+import java.awt.*;
+import java.util.Set;
+
 public interface Controller {
     /**
      * A gateway to push actions from the user to the controller
@@ -14,4 +17,8 @@ public interface Controller {
      * @param frame
      */
     void setFrame(GameFrame frame);
+
+    default Set<Point> getHoles() {
+        return java.util.Collections.emptySet();
+    }
 }

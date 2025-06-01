@@ -6,60 +6,108 @@ import Frame.Memento.GameMemento;
 import GameEntities.Player;
 import GameEntities.Worker;
 
+import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Frame with a 5x5 board (game screen)
+ * Frame with a 5×5 board (or custom dimension),
+ * Supports either the default internal background or a custom file, and optional WAV music.
  */
 public class GameFrame extends JFrame {
-    private final TileButton[][] buttons;
-    private final BackgroundLabel[][] backLabels;
-    private static final String GAMEBOARD = "/assets/gameboard.jpg";
+    private TileButton[][] buttons;
+    private BackgroundLabel[][] backLabels;
+    private JButton saveButton;
 
     private JTextArea infoLabel;
-    private final JButton saveButton;
 
+    private static final String DEFAULT_BG = "/assets/gameboard.jpg";
+
+    private Clip musicClip = null;
+
+    private JLayeredPane layered;
+
+
+    /**
+     * Construct with the default built‐in background image and no music.
+     */
     public GameFrame(Board board, Controller controller) {
-        setTitle("Santorini");
+        super("Santorini");
+        initCommon(board, controller);
+        loadResourceBackground(DEFAULT_BG);
+
+        layered.validate();
+        layered.repaint();
+    }
+
+    /**
+     * Construct with a custom background image file (JPEG) and optional WAV file for music.
+     * Both files can be null to fall back to defaults.
+     */
+    public GameFrame(Board board, Controller controller,
+                     File backgroundImageFile, File musicWavFile) {
+        super("Santorini");
+        initCommon(board, controller);
+
+        if (backgroundImageFile != null && backgroundImageFile.exists()) {
+            loadFileBackground(backgroundImageFile);
+        } else {
+            loadResourceBackground(DEFAULT_BG);
+        }
+
+        if (musicWavFile != null && musicWavFile.exists()) {
+            playBackgroundMusic(musicWavFile);
+        }
+
+        layered.validate();
+        layered.repaint();
+    }
+
+    private void initCommon(Board board, Controller controller) {
         setSize(1215, 865);
         setResizable(false);
         setLayout(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        JLayeredPane layered = new JLayeredPane();
+        layered = new JLayeredPane();
         layered.setBounds(0, 0, 1215, 865);
 
-        URL bgUrl = GameFrame.class.getResource(GAMEBOARD);
-        ImageIcon rawIcon = new ImageIcon(bgUrl);
-        Image rawImg = rawIcon.getImage();
-        Image scaledImg = rawImg.getScaledInstance(1215, 865, Image.SCALE_SMOOTH);
-        ImageIcon bgIcon = new ImageIcon(scaledImg);
-
-        JLabel bgLabel = new JLabel(bgIcon);
-        bgLabel.setBounds(0, 0, 1215, 865);
-        layered.add(bgLabel, Integer.valueOf(0));
+        Set<Point> holeSet = Collections.emptySet();
+        if (controller instanceof TagController) {
+            holeSet = ((TagController) controller).getHoles();
+        } else if (controller instanceof GodPowerController) {
+            GameController core = ((GodPowerController) controller).getCore();
+            if (core != null) {
+                holeSet = core.getHoles();
+            }
+        } else if (controller instanceof GameController) {
+            holeSet = ((GameController) controller).getHoles();
+        }
 
         int boardWidth  = 750;
         int boardHeight = 750;
         int boardX = (1215 - boardWidth) / 2;
-        int boardY = (865  - boardHeight) / 2;
+        int boardY = (865 - boardHeight) / 2;
 
         int rows = board.getRows(), cols = board.getCols();
         JPanel boardPanel = new JPanel(new GridLayout(rows, cols, 15, 15));
         boardPanel.setOpaque(false);
         boardPanel.setBounds(boardX, boardY, boardWidth, boardHeight);
 
-        buttons    = new TileButton[rows][cols];
+        buttons = new TileButton[rows][cols];
         backLabels = new BackgroundLabel[rows][cols];
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 TileButton btn = new TileButton(board.getTile(r, c), controller);
-                BackgroundLabel lbl = new BackgroundLabel(board.getTile(r, c));
+                BackgroundLabel lbl = new BackgroundLabel(board.getTile(r, c), holeSet);
                 backLabels[r][c] = lbl;
                 lbl.add(btn);
                 buttons[r][c] = btn;
@@ -67,7 +115,13 @@ public class GameFrame extends JFrame {
             }
         }
         layered.add(boardPanel, Integer.valueOf(1));
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                backLabels[r][c].updateAppearance();
+            }
+        }
 
+        // ─── Info Label (left) ───
         infoLabel = new JTextArea("Place your workers in any 2 empty tiles.\n\nPlayer 1's Turn");
         infoLabel.setFont(new Font("Arial", Font.BOLD, 16));
         infoLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -104,6 +158,62 @@ public class GameFrame extends JFrame {
         setLocationRelativeTo(null);
         setVisible(true);
     }
+
+    /**
+     * Load a built‐in resource background (from inside the JAR) at layer 0.
+     * (Now adds directly to our `layered` field.)
+     */
+    private void loadResourceBackground(String resourcePath) {
+        URL bgUrl = getClass().getResource(resourcePath);
+        if (bgUrl == null) {
+            getContentPane().setBackground(Color.LIGHT_GRAY);
+            return;
+        }
+        ImageIcon rawIcon = new ImageIcon(bgUrl);
+        Image rawImg = rawIcon.getImage();
+        Image scaledImg = rawImg.getScaledInstance(
+                getWidth(), getHeight(), Image.SCALE_SMOOTH);
+        ImageIcon bgIcon = new ImageIcon(scaledImg);
+
+        JLabel bgLabel = new JLabel(bgIcon);
+        bgLabel.setBounds(0, 0, getWidth(), getHeight());
+        layered.add(bgLabel, Integer.valueOf(0));
+    }
+
+    /**
+     * Load a custom image file from disk as the background
+     */
+    private void loadFileBackground(File imageFile) {
+        try {
+            Image rawImg = ImageIO.read(imageFile);
+            Image scaledImg = rawImg.getScaledInstance(
+                    getWidth(), getHeight(), Image.SCALE_SMOOTH);
+            JLabel bgLabel = new JLabel(new ImageIcon(scaledImg));
+            bgLabel.setBounds(0, 0, getWidth(), getHeight());
+            layered.add(bgLabel, Integer.valueOf(0));
+        } catch (IOException ex) {
+            loadResourceBackground(DEFAULT_BG);
+        }
+    }
+
+    /**
+     * Plays/loops the given WAV file continuously in the background.
+     */
+    private void playBackgroundMusic(File wavFile) {
+        if (musicClip != null && musicClip.isRunning()) {
+            musicClip.stop();
+            musicClip.close();
+        }
+
+        try (AudioInputStream ais = AudioSystem.getAudioInputStream(wavFile)) {
+            musicClip = AudioSystem.getClip();
+            musicClip.open(ais);
+            musicClip.loop(Clip.LOOP_CONTINUOUSLY);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Failed to play music: " + ex.getMessage());
+        }
+    }
+
 
     public void updateLabels(GameController.Phase phase, int playerIndex) {
         String playerString = (playerIndex == 0) ? "Player 1's Turn" : "Player 2's Turn";

@@ -4,7 +4,11 @@ import GameEntities.*;
 import GameEntities.Gods.GodPower;
 
 import javax.swing.*;
+import java.awt.Point;
+import Frame.Boards.Board;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Game logic to run a game of Santorini with God power modifiers
@@ -151,7 +155,7 @@ public class GodPowerController implements Controller {
     /**
      * Return the board from the core controller
      */
-    public Frame.Boards.Board getCoreBoard() {
+    public Board getCoreBoard() {
         return core.getBoard();
     }
 
@@ -162,4 +166,12 @@ public class GodPowerController implements Controller {
         return players;
     }
 
+    @Override
+    public Set<Point> getHoles() {
+        return core.getHoles();
+    }
+
+    public GameController getCore() {
+        return core;
+    }
 }

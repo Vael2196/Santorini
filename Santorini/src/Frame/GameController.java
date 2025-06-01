@@ -5,7 +5,10 @@ import Frame.*;
 import Frame.Boards.*;
 
 import javax.swing.*;
+import java.awt.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Controller level class that contains the core game logic for a game of Santorini (no GodPowers included)
@@ -20,6 +23,9 @@ public class GameController implements Controller {
     private int currentPlayerIndex = 0;
     private Phase phase;
     private Worker selectedWorker;
+    private int workersPerPlayer = 2;
+
+    private final Set<Point> holes = new HashSet<>();
 
     /**
      * Constructor method
@@ -34,6 +40,14 @@ public class GameController implements Controller {
         phase = Phase.SETUP;
         //announcePhase();
     }
+    public GameController(Board board, GameFrame frame, List<Player> players, int workersPerPlayer) {
+        this.board = board;
+        this.frame = frame;
+        this.players = players;
+        phase = Phase.SETUP;
+        this.workersPerPlayer = workersPerPlayer;
+    }
+
 
     @Override
     public void setFrame(GameFrame frame) {
@@ -76,6 +90,17 @@ public class GameController implements Controller {
         return selectedWorker;
     }
 
+    public void setHoles(Set<Point> holeSet) {
+        holes.clear();
+        holes.addAll(holeSet);
+    }
+
+    /** Return the set of holes.  UI will render them as dark‐gray. */
+    @Override
+    public Set<Point> getHoles() {
+        return holes;
+    }
+
     /**
      * The execution logic of movement.
      * Use handleMove instead in case you want to add some leeway to the logic or validateMove to modify any restrictions
@@ -101,17 +126,35 @@ public class GameController implements Controller {
     }
 
     protected void handleSetup(Player current, Tile tile) {
-        if (tile.getOccupant() == null) {
-            Worker worker1 = current.getWorkers().getFirst();
-            Worker worker2 = current.getWorkers().getLast();
-            if (worker1.getCurrentTile() == null) {
-                worker1.setStartingTile(tile);
-            } else if (worker2.getCurrentTile() == null) {
-                worker2.setStartingTile(tile);
-            }
+        int needed = workersPerPlayer;
 
+        if (current.getWorkers().isEmpty()) {
+            for (int i = 0; i < needed; i++) {
+                current.addWorker(new Worker(current));
+            }
+        }
+
+        for (Worker w : current.getWorkers()) {
+            if (w.getCurrentTile() == null) {
+                w.setStartingTile(tile);
+                break;
+            }
+        }
+
+        boolean allFinishedPlacing = true;
+        for (Player p : players) {
+            for (Worker w : p.getWorkers()) {
+                if (w.getCurrentTile() == null) {
+                    allFinishedPlacing = false;
+                    break;
+                }
+            }
+            if (!allFinishedPlacing) break;
+        }
+        if (allFinishedPlacing) {
+            phase = Phase.SELECT;
         } else {
-            JOptionPane.showMessageDialog(frame, "Invalid selection!");
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
         }
         announcePhase();
     }
@@ -191,6 +234,10 @@ public class GameController implements Controller {
      * @param target
      */
     protected void validateMove(Worker w, Tile target) {
+        Point p = new Point(target.getX(), target.getY());
+        if (holes.contains(p)) {
+            throw new IllegalArgumentException("Destination blocked (hole)");
+        }
         Tile origin = w.getCurrentTile();
         if (target.isOccupied() || target.getBuilding().hasDome())
             throw new IllegalArgumentException("Destination blocked");
@@ -210,6 +257,10 @@ public class GameController implements Controller {
      * @param target
      */
     protected void validateBuild(Worker w, Tile target) {
+        Point p = new Point(target.getX(), target.getY());
+        if (holes.contains(p)) {
+            throw new IllegalArgumentException("Cannot build here (hole)");
+        }
         Tile origin = w.getCurrentTile();
         if (target.isOccupied() || target.getBuilding().hasDome())
             throw new IllegalArgumentException("Cannot build here");
@@ -242,11 +293,15 @@ public class GameController implements Controller {
         System.out.println("Turn: " + current.getColor() + " — " + phase.name());
     }
 
-    public Frame.Boards.Board getBoard() {
+    public Board getBoard() {
         return board;
     }
 
     public void setCurrentPlayerIndex(int currentPlayerIndex) {
         this.currentPlayerIndex = currentPlayerIndex;
+    }
+
+    public int getCurrentPlayerIndex() {
+        return currentPlayerIndex;
     }
 }
