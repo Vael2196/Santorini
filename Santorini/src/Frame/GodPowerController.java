@@ -138,4 +138,28 @@ public class GodPowerController implements Controller {
         }
     }
 
+    /** Return the index (0‐based) of the player whose turn it is now. */
+    public int getCurrentPlayerIndex() {
+        return idx;
+    }
+
+    /** Return the current game phase from the core controller. */
+    public GameController.Phase getCorePhase() {
+        return core.getPhase();
+    }
+
+    /**
+     * Return the board from the core controller
+     */
+    public Frame.Boards.Board getCoreBoard() {
+        return core.getBoard();
+    }
+
+    /**
+     * Return the list of players
+     */
+    public List<Player> getPlayers() {
+        return players;
+    }
+
 }

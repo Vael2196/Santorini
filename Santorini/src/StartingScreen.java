@@ -5,6 +5,7 @@ import Frame.GameController;
 import Frame.GameFrame;
 import Frame.GodPowerController;
 import Frame.ImagePanel;
+import Frame.Memento.*;
 import GameEntities.Gods.*;
 import GameEntities.Player;
 import GameEntities.Worker;
@@ -16,6 +17,7 @@ import java.awt.Color;
 import java.awt.Font;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
@@ -56,6 +58,14 @@ public class StartingScreen {
         startButton.setFont(new Font("Arial", Font.BOLD, 20));
         //startButton.setBounds(200, 400, 100, 50);
         imgPanel.add(startButton);
+
+        JButton loadButton = new JButton("Load");
+        loadButton.setBounds(200, 360, 100, 50);
+        loadButton.setBorderPainted(false);
+        loadButton.setBackground(new Color(0, 0, 0, 0));
+        loadButton.setOpaque(false);
+        loadButton.setFont(new Font("Arial", Font.BOLD, 20));
+        imgPanel.add(loadButton);
 
         JButton exitButton =  new JButton("Exit");
         exitButton.setBounds(200,390,100,50);
@@ -108,6 +118,33 @@ public class StartingScreen {
             godController.setFrame(frame);
 
             SwingUtilities.invokeLater(() -> {});
+        });
+
+        loadButton.addActionListener(a -> {
+            JFileChooser chooser = new JFileChooser();
+            int ret = chooser.showOpenDialog(startingFrame);
+            if (ret != JFileChooser.APPROVE_OPTION) return;
+            File file = chooser.getSelectedFile();
+            try {
+                // Load the saved state
+                Object[] state = GameCaretaker.loadFromFile(file);
+                Board loadedBoard = (Board) state[0];
+                @SuppressWarnings("unchecked")
+                List<Player> loadedPlayers = (List<Player>) state[1];
+                int currentIdx = (int) state[2];
+
+                GameController coreController = new GameController(loadedBoard, null, loadedPlayers);
+                GodPowerController godController = new GodPowerController(coreController, loadedPlayers);
+                coreController.setCurrentPlayerIndex(currentIdx);
+                GameFrame frame = new GameFrame(loadedBoard, godController);
+                coreController.setFrame(frame);
+                godController.setFrame(frame);
+
+                startingFrame.dispose();
+                SwingUtilities.invokeLater(() -> {});
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(startingFrame, "Load failed: " + ex.getMessage());
+            }
         });
 
         exitButton.addActionListener( a -> {

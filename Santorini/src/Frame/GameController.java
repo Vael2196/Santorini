@@ -242,4 +242,11 @@ public class GameController implements Controller {
         System.out.println("Turn: " + current.getColor() + " — " + phase.name());
     }
 
+    public Frame.Boards.Board getBoard() {
+        return board;
+    }
+
+    public void setCurrentPlayerIndex(int currentPlayerIndex) {
+        this.currentPlayerIndex = currentPlayerIndex;
+    }
 }
