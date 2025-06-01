@@ -36,13 +36,13 @@ The directory structure goes as following:
         - default background + images
     - Frame  <--(All the front end and interuction related classes, e.g. Views and Controllers)
         - Boards
-            - 
+            - ...
         - Memento    <---(save state logic)
-            - 
+            - ...
         - ... Controllers and Views...
     - GameEntities   <--(All the data holders/ Model level classes)
         - Gods
-            - 
+            - ...
         - ...Building, Player, and Worker
     - Main <--(Stale code; left for future use)
     - StartingScreen <--(Current executable)
