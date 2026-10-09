@@ -1,0 +1,10 @@
+# Optional: join an existing database network without creating another MySQL service.
+services:
+  server:
+    networks:
+      - default
+      - project-data
+networks:
+  project-data:
+    external: true
+    name: ${DATABASE_NETWORK:?Set DATABASE_NETWORK to your existing MySQL Docker network}

@@ -1,0 +1,12 @@
+**/target
+**/node_modules
+**/dist
+**/test-results
+**/playwright-report
+.git
+.idea
+.env
+Santorini executable
+sprint_one
+sprint_two
+sprint_three

@@ -44,8 +44,8 @@ public class GodPowerController implements Controller {
         switch (core.getPhase()) {
             case SETUP -> {
                 core.handleSetup(current, tile);
-                if (current.getWorkers().getLast().getCurrentTile() != null) {
-                    if (players.getFirst() == current) {
+                if (current.getWorkers().get(current.getWorkers().size() - 1).getCurrentTile() != null) {
+                    if (players.get(0) == current) {
                         power.resetTurn();
                         core.endTurn();
                         idx = (idx + 1) % players.size();

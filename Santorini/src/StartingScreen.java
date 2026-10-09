@@ -70,9 +70,17 @@ public class StartingScreen {
         levelEditorButton.setForeground(Color.BLACK);
         imgPanel.add(levelEditorButton);
 
+        JButton onlineButton = new JButton("Play Online");
+        onlineButton.setFont(new Font("Arial", Font.BOLD, 20));
+        onlineButton.setBounds(centerX, baseY + spacing * 3, btnWidth, btnHeight);
+        onlineButton.setBackground(Color.WHITE);
+        onlineButton.setForeground(Color.BLACK);
+        imgPanel.add(onlineButton);
+        onlineButton.addActionListener(a -> new online.desktop.OnlineFrame());
+
         JButton exitButton = new JButton("Exit");
         exitButton.setFont(new Font("Arial", Font.BOLD, 20));
-        exitButton.setBounds(centerX, baseY + spacing * 3, btnWidth, btnHeight);
+        exitButton.setBounds(centerX, baseY + spacing * 4, btnWidth, btnHeight);
         exitButton.setOpaque(true);
         exitButton.setBackground(Color.WHITE);
         exitButton.setForeground(Color.BLACK);

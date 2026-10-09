@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <parent><groupId>io.github.vael2196</groupId><artifactId>santorini-parent</artifactId><version>1.0.0-SNAPSHOT</version></parent>
+  <artifactId>game-core</artifactId>
+  <dependencies><dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency></dependencies>
+  <build>
+    <!-- Share existing model and strategies, without compiling Swing controllers. -->
+    <sourceDirectory>../Santorini/src</sourceDirectory>
+    <plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+      <configuration><includes>
+        <include>GameEntities/**/*.java</include><include>Frame/Tile.java</include><include>Frame/Boards/**/*.java</include>
+        <include>online/core/**/*.java</include><include>online/protocol/**/*.java</include>
+      </includes></configuration>
+    </plugin></plugins>
+  </build>
+</project>

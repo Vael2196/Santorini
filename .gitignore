@@ -4,3 +4,18 @@ out/
 .idea/
 /out/
 /.idea/
+
+# Maven, React and local runtime files
+**/target/
+web-client/node_modules/
+web-client/dist/
+web-client/test-results/
+web-client/playwright-report/
+.env
+*.log
+
+# Private run notes and persistent local accounts
+/RUNNING.local.md
+/data/
+**/*.mv.db
+**/*.trace.db

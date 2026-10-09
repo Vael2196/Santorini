@@ -1,0 +1,31 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: multiplayer-server/Dockerfile
+    restart: unless-stopped
+    environment:
+      GAME_ALLOWED_ORIGINS: ${GAME_ALLOWED_ORIGINS:-http://localhost:8081,http://127.0.0.1:8081}
+      GAME_RECONNECT_SECONDS: ${GAME_RECONNECT_SECONDS:-60}
+      GAME_MAX_ROOMS: ${GAME_MAX_ROOMS:-100}
+      DATABASE_URL: ${DATABASE_URL:-jdbc:h2:file:/app/data/santorini;DB_CLOSE_ON_EXIT=FALSE}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-sa}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-}
+      AUTH_SECURE_COOKIE: ${AUTH_SECURE_COOKIE:-false}
+    volumes:
+      - account-data:/app/data
+    mem_limit: 512m
+    init: true
+  web:
+    build:
+      context: .
+      dockerfile: web-client/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8081}:80"
+    depends_on:
+      - server
+    mem_limit: 64m
+
+volumes:
+  account-data:
