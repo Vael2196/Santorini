@@ -26,6 +26,9 @@ test("private match plays, rejects invalid squares, survives reload and resigns"
   try {
     await lobby(host, "Island host");
     await lobby(guest, "Island guest");
+    await host.getByRole("button", { name: "Settings", exact: true }).click();
+    await host.getByLabel("Show tower levels").check();
+    await host.getByRole("button", { name: "Settings", exact: true }).click();
     await host.getByLabel("Game rules").selectOption("CLASSIC");
     await host.getByRole("button", { name: "Create a private room" }).click();
     const code = await roomCode(host);
@@ -54,6 +57,12 @@ test("private match plays, rejects invalid squares, survives reload and resigns"
       "aria-label",
       /level 1/,
     );
+    await expect(host.locator(".level-marker")).toHaveText("1");
+    expect(
+      await host
+        .getByTestId("cell-0-0")
+        .evaluate((tile) => getComputedStyle(tile).outlineStyle),
+    ).toBe("none");
     await host.reload();
     await expect(host.locator(".room-code strong")).toHaveText(code);
     await expect(guest.getByTestId("cell-4-4")).toBeEnabled();
@@ -115,6 +124,13 @@ test("mobile lobby and board fit the viewport", async ({ page }) => {
   await lobby(page, "Mobile player");
   await page.getByRole("button", { name: "Create a private room" }).click();
   await expect(page.locator(".isometric-board")).toBeVisible();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByLabel("In-game cursor colour").selectOption("charcoal");
+  await page.getByLabel("Show tower levels").check();
+  await expect(page.locator(".board-panel .isometric-board")).toHaveAttribute(
+    "data-cursor-colour",
+    "charcoal",
+  );
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -138,11 +154,19 @@ test("accounts reserve their names and can log back in after logout", async ({
       .getByLabel("Password", { exact: true })
       .fill("a rather sturdy password");
     await owner
-      .getByRole("button", { name: "Create account and take a seat" })
+      .getByRole("button", { name: "Create account and play" })
       .click();
     await expect(owner.getByRole("status")).toContainText(
       `${accountName} · account`,
     );
+    await owner.getByRole("button", { name: "Settings", exact: true }).click();
+    await owner.getByLabel("In-game cursor colour").selectOption("teal");
+    await owner.getByLabel("Show tower levels").check();
+    await owner.getByRole("button", { name: "Mute all sounds" }).click();
+    await expect(
+      owner.getByText("Saved to your account", { exact: true }),
+    ).toBeVisible();
+    await owner.evaluate(() => localStorage.clear());
     await guest.goto("/");
     await guest.getByLabel("Display name").fill(accountName.toLowerCase());
     await guest.getByRole("button", { name: "Enter the lobby" }).click();
@@ -153,10 +177,15 @@ test("accounts reserve their names and can log back in after logout", async ({
     await owner
       .getByLabel("Password", { exact: true })
       .fill("a rather sturdy password");
-    await owner.getByRole("button", { name: "Log in and take a seat" }).click();
+    await owner.getByRole("button", { name: "Log in and play" }).click();
     await expect(owner.getByRole("status")).toContainText(
       `${accountName} · account`,
     );
+    await expect(owner.getByLabel("In-game cursor colour")).toHaveValue("teal");
+    await expect(owner.getByLabel("Show tower levels")).toBeChecked();
+    await expect(
+      owner.getByRole("button", { name: "Enable all sounds" }),
+    ).toBeVisible();
   } finally {
     await owner.close();
     await guest.close();

@@ -26,7 +26,17 @@ public class AuthController {
     @GetMapping("/csrf") public Map<String,String> csrf(CsrfToken token) { return Map.of("token", token.getToken()); }
     @GetMapping("/me") public ResponseEntity<?> me(HttpServletRequest request) {
         AccountService.Session session = accounts.session(cookie(request));
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(session == null ? Map.of("authenticated", false) : Map.of("authenticated", true, "account", session.account()));
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(session == null ? Map.of("authenticated", false) : profile(session.account()));
+    }
+    @PostMapping(value = "/preferences", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> preferences(@RequestBody AccountService.Preferences body, HttpServletRequest request) {
+        AccountService.Session session = accounts.session(cookie(request));
+        if (session == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Log in to save settings to your account.");
+        accounts.savePreferences(session.account(), body);
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(profile(session.account()));
+    }
+    private Map<String, Object> profile(AccountService.Account account) {
+        return Map.of("authenticated", true, "account", account, "preferences", accounts.preferences(account));
     }
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> register(@RequestBody Credentials body, HttpServletRequest request) {
@@ -50,7 +60,7 @@ public class AuthController {
     private ResponseEntity<?> welcome(AccountService.Login login, HttpServletRequest request) {
         accounts.revoke(accounts.session(cookie(request)));
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, accountCookie(login.token(), accounts.cookieSeconds()))
-                .cacheControl(CacheControl.noStore()).body(Map.of("authenticated", true, "account", login.session().account()));
+                .cacheControl(CacheControl.noStore()).body(profile(login.session().account()));
     }
     private String accountCookie(String token, long seconds) {
         return ResponseCookie.from(COOKIE, token).httpOnly(true).secure(secure).sameSite("Lax").path("/").maxAge(Duration.ofSeconds(seconds)).build().toString();
@@ -62,7 +72,7 @@ public class AuthController {
     private synchronized void limit(String key, int maximum, long period) {
         long now = System.currentTimeMillis();
         limits.entrySet().removeIf(e -> now >= e.getValue().until);
-        if (limits.size() >= 10_000 && !limits.containsKey(key)) throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "The gatekeeper needs a breather. Try again later.");
+        if (limits.size() >= 10_000 && !limits.containsKey(key)) throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Account services are busy. Try again later.");
         Attempts attempts = limits.computeIfAbsent(key, ignored -> new Attempts(now + period));
         if (++attempts.count > maximum) throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Too many attempts. Give it a few minutes before trying again.");
     }

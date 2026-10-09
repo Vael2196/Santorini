@@ -1,4 +1,5 @@
-import { useId } from "react";
+import { useId, type CSSProperties } from "react";
+import type { CursorColour } from "./preferences";
 import type { Cell, GameAction, RoomState } from "./types";
 
 export const emptyCells = (): Cell[] =>
@@ -67,12 +68,14 @@ function Tile({
   action,
   selected,
   label,
+  showLevels,
   onAction,
 }: {
   cell: Cell;
   action?: GameAction;
   selected: boolean;
   label: string;
+  showLevels: boolean;
   onAction?: (action: GameAction) => void;
 }) {
   const x = 410 + (cell.col - cell.row) * 55;
@@ -147,16 +150,6 @@ function Tile({
           stroke="#896636"
           strokeWidth="2"
         />
-        {selected && (
-          <ellipse
-            cy={-height + 3}
-            rx="18"
-            ry="9"
-            fill="none"
-            stroke="#ac653a"
-            strokeWidth="2"
-          />
-        )}
         {cell.owner !== null && (
           <Worker
             owner={cell.owner}
@@ -168,10 +161,32 @@ function Tile({
           {String.fromCharCode(65 + cell.col)}
           {cell.row + 1}
         </text>
-        {cell.level > 0 && (
-          <text className="height-label" x="35" y="11" textAnchor="middle">
-            {cell.dome ? "D" : cell.level}
-          </text>
+        {showLevels && cell.level > 0 && (
+          <g
+            className="level-marker"
+            transform={`translate(23 ${-height - (cell.dome ? 35 : 22)})`}
+          >
+            <rect
+              x="-10"
+              y="-10"
+              width="20"
+              height="20"
+              rx="5"
+              fill="#fff5df"
+              stroke="#29221b"
+              strokeWidth="1.5"
+            />
+            <text
+              y="4"
+              textAnchor="middle"
+              fontSize="13"
+              fontFamily="sans-serif"
+              fontWeight="700"
+              fill="#29221b"
+            >
+              {cell.dome ? "D" : cell.level}
+            </text>
+          </g>
         )}
       </g>
       <polygon
@@ -202,11 +217,15 @@ export function Board({
   actions = [],
   onAction,
   illustration = false,
+  cursorColour = "brown",
+  showLevels = false,
 }: {
   room?: RoomState;
   actions?: GameAction[];
   onAction?: (action: GameAction) => void;
   illustration?: boolean;
+  cursorColour?: CursorColour;
+  showLevels?: boolean;
 }) {
   const id = useId().replace(/:/g, "");
   const cells = room?.game?.cells ?? emptyCells();
@@ -231,6 +250,15 @@ export function Board({
   return (
     <div
       className={`isometric-board ${illustration ? "illustration" : ""}`}
+      data-cursor-colour={cursorColour}
+      style={
+        Object.fromEntries(
+          ["hammer", "move", "place", "select", "pointer"].map((tool) => [
+            `--cursor-${tool}`,
+            `url("/assets/cursors/${cursorColour}/${tool}.svg")`,
+          ]),
+        ) as CSSProperties
+      }
       role={illustration ? undefined : "group"}
       aria-label={illustration ? undefined : "Santorini board"}
       aria-hidden={illustration || undefined}
@@ -271,15 +299,15 @@ export function Board({
           <path
             d="M410 101 L690 241 L690 277 L410 417 L130 277 L130 241Z"
             fill="#a98c62"
-            stroke="#806545"
-            strokeWidth="1"
+            stroke="#29221b"
+            strokeWidth="2.5"
           />
           <path d="M410 381 L690 241 V277 L410 417Z" fill="#94744f" />
           <path
             d="M410 101 L690 241 L410 381 L130 241Z"
             fill="#d4bc94"
-            stroke="#b1946c"
-            strokeWidth="3"
+            stroke="#29221b"
+            strokeWidth="2.5"
           />
           <path
             d="M147 261 L410 393 L673 261 M147 271 L410 403 L673 271"
@@ -312,6 +340,7 @@ export function Board({
             <Tile
               key={`${cell.row}-${cell.col}`}
               cell={cell}
+              showLevels={showLevels}
               action={illustration ? undefined : cellAction(cell, actions)}
               selected={
                 cell.worker !== null &&

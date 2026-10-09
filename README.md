@@ -1,6 +1,6 @@
 # Santorini
 
-A small island, two builders apiece, and an increasingly awkward collection of towers.
+A strategy game for two players: move your workers, build towers and reach the third level.
 
 Santorini is a Java board-game project with a browser client and online multiplayer. Two players
 can meet through the public queue or share a private room code. A browser player and a Java
@@ -10,7 +10,7 @@ The project began as a university team application built with Swing. This versio
 work with a headless game engine, a Spring Boot server and a React/TypeScript interface. The
 original local games, save snapshots and experimental map editor remain in the desktop application.
 
-## A visit to the island
+## Playing online
 
 Guest players choose a temporary name and enter without a password. Names are unique across
 active guests and registered accounts, ignoring case and surrounding spaces. A disconnected guest
@@ -25,9 +25,12 @@ the same rules and never selects a private room. Each player chooses a power, ma
 ready, and places two workers. The server then controls the turn sequence and legal actions.
 
 The browser view uses parchment textures, isometric stone tiles, framed panels and small tool
-cursors. A hammer marks a legal build; a boot marks a legal move. Tower height, worker ownership,
-coordinates and available actions are also shown without relying on colour alone. Legal tiles
-support keyboard navigation and activation.
+cursors. A hammer marks a legal build; a boot marks a legal move. Numbered workers, coordinates, available actions
+and optional tower-level markers identify the board state without relying on colour alone. Legal tiles
+support keyboard navigation and activation. The board has a dark outline for contrast. Game settings
+offer four cursor colours (dark brown by default) and optional level markers above buildings. Short
+interaction sounds share one mute button in the header. Settings are saved to an account for registered
+players and on the device for guests.
 
 ## Rules in this version
 
@@ -91,8 +94,7 @@ The original application was developed by Team024, including Vadim Filyakin (`vf
 work includes Triton, save snapshots, a map editor and a Tag-inspired mode. The historical executable
 in the repository predates online play; the current Maven desktop build contains the network client.
 
-The web interface uses selected assets from Kenney's **Cartography Pack**, **Isometric Miniature
-Bases**, **Fantasy UI Borders** and **Cursor Pack**. The supplied packs are CC0; their licence texts
-are preserved under [web-client/public/assets/licences](web-client/public/assets/licences).
+Selected artwork and sound licence files are kept in
+[web-client/public/assets/licences](web-client/public/assets/licences).
 
-[Santorini source](https://github.com/Vael2196/Santorini) · [Kenney artwork](https://kenney.nl)
+[Santorini source](https://github.com/Vael2196/Santorini)

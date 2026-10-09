@@ -24,6 +24,14 @@ public class AccountService {
     public record Account(String id, String name) {}
     public record Session(String hash, Account account, long expiresAt) {}
     public record Login(String token, Session session) {}
+    public record Preferences(String cursorColour, Boolean showLevels, Boolean soundEnabled) {
+        public Preferences {
+            if (cursorColour == null || !List.of("brown", "charcoal", "teal", "ivory").contains(cursorColour)
+                    || showLevels == null || soundEnabled == null) {
+                throw new IllegalArgumentException("Choose a cursor colour and set both the tower-level and sound options.");
+            }
+        }
+    }
     private final JdbcTemplate db;
     private final NameRegistry names;
     private final BCryptPasswordEncoder passwords = new BCryptPasswordEncoder(12);
@@ -83,6 +91,14 @@ public class AccountService {
     public boolean valid(Session session) { return session != null && session.expiresAt() > System.currentTimeMillis() && sessionByHash(session.hash()) != null; }
     public void revoke(Session session) { if (session != null) db.update("DELETE FROM account_sessions WHERE token_hash = ?", session.hash()); }
     public long cookieSeconds() { return lifetime / 1000; }
+    public Preferences preferences(Account account) {
+        return db.queryForObject("SELECT cursor_colour, show_levels, sound_enabled FROM player_accounts WHERE id = ?",
+                (rs, row) -> new Preferences(rs.getString("cursor_colour"), rs.getBoolean("show_levels"), rs.getBoolean("sound_enabled")), account.id());
+    }
+    public void savePreferences(Account account, Preferences preferences) {
+        db.update("UPDATE player_accounts SET cursor_colour = ?, show_levels = ?, sound_enabled = ? WHERE id = ?",
+                preferences.cursorColour(), preferences.showLevels(), preferences.soundEnabled(), account.id());
+    }
     private Login startSession(Account account) {
         byte[] bytes = new byte[32]; random.nextBytes(bytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
@@ -96,7 +112,7 @@ public class AccountService {
     }
     @Scheduled(fixedDelay = 60_000) public void cleanup() { db.update("DELETE FROM account_sessions WHERE expires_at <= ?", System.currentTimeMillis()); }
     private void acquirePasswordSlot() {
-        if (!passwordSlots.tryAcquire()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "The gatekeeper is busy. Try again in a moment.");
+        if (!passwordSlots.tryAcquire()) throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Account services are busy. Try again in a moment.");
     }
     private static void validatePassword(String password) {
         if (password == null || password.length() < 12 || password.getBytes(StandardCharsets.UTF_8).length > 72) {

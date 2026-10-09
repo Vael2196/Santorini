@@ -3,28 +3,31 @@ import { Board } from "./Board";
 import { accountRequest, type Account } from "./account";
 import type { RoomState } from "./types";
 import { useGame } from "./useGame";
+import { Settings } from "./Settings";
+import { usePreferences } from "./usePreferences";
+import { useSounds } from "./useSounds";
 
 const powers: Record<string, { title: string; text: string }> = {
   Artemis: {
-    title: "The nimble one",
+    title: "Second move",
     text: "You may move once more, so long as you do not return to where you started.",
   },
   Demeter: {
-    title: "The industrious one",
+    title: "Second build",
     text: "You may build once more, on a different neighbouring tile.",
   },
   Triton: {
-    title: "The wanderer",
+    title: "Same-level movement",
     text: "In this project’s variant, you may keep moving while every step stays at the same height.",
   },
   None: {
-    title: "A quiet day",
-    text: "One move, one build. Plenty to think about.",
+    title: "Classic rules",
+    text: "Move once, then build once.",
   },
 };
 function instruction(room: RoomState) {
   if (room.paused)
-    return "A brief intermission. Waiting for your opponent to return.";
+    return "Match paused. Waiting for your opponent to reconnect.";
   if (!room.game)
     return room.players.length < 2
       ? "Waiting for a second player…"
@@ -48,8 +51,8 @@ function Rulebook() {
   return (
     <aside className="paper-panel rulebook" aria-label="How to play">
       <div>
-        <span className="eyebrow">A page from the rulebook</span>
-        <h2>A modest guide to island life</h2>
+        <span className="eyebrow">The rules</span>
+        <h2>How to play</h2>
       </div>
       <div className="rulebook-columns">
         <p>
@@ -62,7 +65,7 @@ function Rulebook() {
           Domes close a tile. This version keeps the desktop game’s limit of one
           level when climbing <em>and descending</em>. Artemis, Demeter and this
           project’s Triton variant offer optional extra actions. Use the buttons
-          beside the board when you have done enough.
+          beside the board to finish an optional move or build.
         </p>
       </div>
     </aside>
@@ -84,6 +87,14 @@ export default function App() {
   const [code, setCode] = useState("");
   const [copied, setCopied] = useState(false);
   const [help, setHelp] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settings = usePreferences();
+  const sounds = useSounds(
+    !checkingAccount && settings.preferences.soundEnabled,
+    game.room,
+    game.status,
+    authError || game.error,
+  );
   const room = game.room;
   const connected = game.status === "online";
   const enabled = connected && !game.busy;
@@ -97,7 +108,10 @@ export default function App() {
     let active = true;
     accountRequest("me")
       .then((result) => {
-        if (active) setAccount(result.account ?? null);
+        if (active) {
+          setAccount(result.account ?? null);
+          settings.hydrate(result.account?.id ?? null, result.preferences);
+        }
       })
       .catch(() => {
         /* The guest gate remains available if account discovery fails. */
@@ -121,6 +135,7 @@ export default function App() {
       const result = await accountRequest(authMode, { name, password });
       setPassword("");
       setAccount(result.account!);
+      settings.hydrate(result.account!.id, result.preferences);
       game.connect(result.account!.name);
     } catch (error) {
       setAuthError((error as Error).message);
@@ -131,14 +146,16 @@ export default function App() {
   async function signOut() {
     if (
       room?.status === "PLAYING" &&
-      !confirm("Leave the island? Your opponent will win this match.")
+      !confirm("Leave this match? Your opponent will win.")
     )
       return;
     setAuthBusy(true);
     setAuthError("");
     try {
       await game.disconnect();
+      await settings.flush();
       if (account) await accountRequest("logout", {});
+      settings.hydrate(null);
       setAccount(null);
       setName("");
       setPassword("");
@@ -162,15 +179,33 @@ export default function App() {
   }
 
   return (
-    <div className="app parchment">
+    <div
+      className="app parchment"
+      onPointerDownCapture={() => sounds.unlock()}
+      onKeyDownCapture={() => sounds.unlock()}
+      onClickCapture={(event) => {
+        const button = (event.target as Element).closest("button");
+        if (
+          button &&
+          !button.disabled &&
+          !button.hasAttribute("data-sound-toggle")
+        )
+          sounds.play(button.hasAttribute("data-rulebook") ? "book" : "click");
+      }}
+      onChangeCapture={(event) => {
+        const target = event.target as HTMLInputElement;
+        if (target.tagName === "SELECT" || target.type === "checkbox")
+          sounds.play("click");
+      }}
+    >
       <header className="masthead">
         <a className="brand" href="/" aria-label="Santorini home">
           <img src="/assets/compass.png" alt="" />
           <span>
-            Santorini<small>A little island on your table</small>
+            Santorini<small>A game of towers and tactics</small>
           </span>
         </a>
-        <nav className="header-right" aria-label="Island menu">
+        <nav className="header-right" aria-label="Game menu">
           <span
             className={`connection ${connected ? "live" : ""}`}
             role="status"
@@ -179,11 +214,57 @@ export default function App() {
             {connected
               ? `${playerName} · ${game.identity?.guest ? "guest" : "account"}`
               : game.status === "offline"
-                ? "The island is open"
-                : "Finding our way back…"}
+                ? "Ready to play"
+                : "Connecting…"}
           </span>
           <button
+            className="text-button sound-toggle"
+            data-sound-toggle
+            disabled={checkingAccount || authBusy}
+            aria-pressed={settings.preferences.soundEnabled}
+            aria-label={
+              settings.preferences.soundEnabled
+                ? "Mute all sounds"
+                : "Enable all sounds"
+            }
+            onClick={() => {
+              const enabled = !settings.preferences.soundEnabled;
+              sounds.setEnabled(enabled);
+              settings.update({ soundEnabled: enabled });
+              if (enabled) sounds.play("click");
+            }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="17"
+              height="17"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4 9h4l5-4v14l-5-4H4Z" />
+              {settings.preferences.soundEnabled ? (
+                <path d="M17 8q5 4 0 8M16 10q2 2 0 4" />
+              ) : (
+                <path d="m17 9 5 6m0-6-5 6" />
+              )}
+            </svg>
+            Sound {settings.preferences.soundEnabled ? "on" : "off"}
+          </button>
+          <button
             className="text-button"
+            aria-expanded={settingsOpen}
+            aria-controls="game-settings"
+            onClick={() => setSettingsOpen(!settingsOpen)}
+          >
+            Settings
+          </button>
+          <button
+            className="text-button"
+            data-rulebook
             onClick={() => setHelp(!help)}
             aria-expanded={help}
           >
@@ -207,18 +288,36 @@ export default function App() {
           </div>
         )}
         {help && <Rulebook />}
+        {settingsOpen && (
+          <div id="game-settings">
+            <Settings
+              preferences={settings.preferences}
+              onChange={settings.update}
+              disabled={checkingAccount || authBusy}
+              account={!!account}
+              saveState={settings.saveState}
+              saveError={settings.saveError}
+            />
+          </div>
+        )}
+        {!settingsOpen && settings.saveError && (
+          <div className="notice" role="alert">
+            {settings.saveError} Open Settings to retry.
+          </div>
+        )}
         {!room ? (
           <div className="landing">
             <section className="intro">
-              <span className="eyebrow">The island ledger · two players</span>
+              <span className="eyebrow">A strategy game for two</span>
               <h1>
-                A few stones.
-                <br />A little mischief.
+                Build the island.
+                <br />
+                Reach the summit.
               </h1>
               <p className="intro-copy">
-                Two builders arrive on a small island. They put up towers, get
-                in one another’s way, and try to reach the top. Shall we see how
-                it goes?
+                Move your workers, raise towers and block your opponent’s path.
+                Climb to the third level to win. On this island, every step
+                counts.
               </p>
               <div className="map-illustration">
                 <img
@@ -233,11 +332,11 @@ export default function App() {
                   alt=""
                 />
                 <span className="map-note">
-                  Not to scale. Ambition rarely is.
+                  Five rows. Five columns. Room for a plan.
                 </span>
               </div>
               <div className="field-notes">
-                <span>01 / Choose your company</span>
+                <span>Play online</span>
                 <p>
                   Meet someone in the public queue, or share a private room code
                   with a friend. Browser and Java desktop players can sit at the
@@ -248,17 +347,17 @@ export default function App() {
             <section className="paper-panel lobby">
               {!connected ? (
                 <>
-                  <span className="eyebrow">The guest book</span>
+                  <span className="eyebrow">Join the game</span>
                   <h2>
                     {account
                       ? `Welcome back, ${account.name}.`
-                      : "What shall we call you?"}
+                      : "Choose a player name"}
                   </h2>
                   {account ? (
                     <>
                       <p>
-                        Your name is still here. Your last cup of tea, alas, is
-                        not.
+                        Your account is ready. Enter the lobby to find a match
+                        or invite a friend.
                       </p>
                       <button
                         className="primary full"
@@ -299,10 +398,10 @@ export default function App() {
                       </div>
                       <p className="gate-note">
                         {authMode === "guest"
-                          ? "No password, no paperwork. Your name is yours for this visit."
+                          ? "Play without a password. Your guest name lasts for this session."
                           : authMode === "login"
-                            ? "A familiar name and its password will do."
-                            : "Keep a name of your own for future visits. No email address needed."}
+                            ? "Enter your account name and password."
+                            : "Reserve a name and save your settings. No email address is required."}
                       </p>
                       <form
                         onSubmit={(event) => {
@@ -320,7 +419,7 @@ export default function App() {
                           maxLength={24}
                           value={name}
                           onChange={(event) => setName(event.target.value)}
-                          placeholder="A name for the guest book"
+                          placeholder="Your player name"
                           autoComplete={
                             authMode === "guest" ? "nickname" : "username"
                           }
@@ -351,8 +450,8 @@ export default function App() {
                             />
                             {authMode === "register" && (
                               <p className="subtle password-note">
-                                At least 12 characters. A handful of unrelated
-                                words works nicely.
+                                At least 12 characters. A passphrase of several
+                                unrelated words is a good choice.
                               </p>
                             )}
                           </>
@@ -367,29 +466,28 @@ export default function App() {
                           }
                         >
                           {authBusy
-                            ? "A moment, please…"
+                            ? "Please wait…"
                             : game.status !== "offline"
                               ? "Connecting…"
                               : authMode === "guest"
                                 ? "Enter the lobby →"
                                 : authMode === "login"
-                                  ? "Log in and take a seat"
-                                  : "Create account and take a seat"}
+                                  ? "Log in and play"
+                                  : "Create account and play"}
                         </button>
                       </form>
                       <p className="fine-print">
-                        Names are shared by guests and accounts. Changing the
-                        capital letters will not borrow someone else’s name.
-                        Guest names are kept briefly after a disconnection so
-                        you can return.
+                        Names must be unique, regardless of capitalisation.
+                        Guest names are reserved briefly after a disconnection
+                        so you can rejoin.
                       </p>
                     </>
                   )}
                 </>
               ) : (
                 <>
-                  <span className="eyebrow">A seat for {playerName}</span>
-                  <h2>Who’s joining you?</h2>
+                  <span className="eyebrow">Playing as {playerName}</span>
+                  <h2>Choose a match</h2>
                   <label htmlFor="rules">Game rules</label>
                   <select
                     id="rules"
@@ -455,15 +553,15 @@ export default function App() {
             <div className="room-heading">
               <div>
                 <span className="eyebrow">
-                  {room.publicRoom ? "Public table" : "Private table"} ·{" "}
+                  {room.publicRoom ? "Public room" : "Private room"} ·{" "}
                   {room.rules === "GODS" ? "God powers" : "Classic"}
                 </span>
                 <h1>
                   {room.status === "WAITING"
-                    ? "Pull up a chair."
+                    ? "Waiting for players"
                     : room.status === "FINISHED"
-                      ? "The dust settles."
-                      : "A small matter of strategy."}
+                      ? "Match complete"
+                      : "The island awaits"}
                 </h1>
               </div>
               <button
@@ -490,7 +588,7 @@ export default function App() {
                 </div>
                 {room.paused && (
                   <p className="subtle pause-note">
-                    The seat is reserved until{" "}
+                    Your opponent’s place is reserved until{" "}
                     {new Date(room.reconnectDeadline).toLocaleTimeString(
                       "en-GB",
                       { hour: "2-digit", minute: "2-digit", second: "2-digit" },
@@ -500,6 +598,8 @@ export default function App() {
                 )}
                 <Board
                   room={room}
+                  cursorColour={settings.preferences.cursorColour}
+                  showLevels={settings.preferences.showLevels}
                   actions={actions}
                   onAction={(action) => game.send({ type: "ACTION", action })}
                 />
@@ -508,16 +608,18 @@ export default function App() {
                     <i className="legend-stone" />
                     Outlined tiles are available
                   </span>
-                  <span>Numbers show tower height · D means dome</span>
+                  <span>
+                    {settings.preferences.showLevels
+                      ? "Tower levels are shown above buildings · D means dome"
+                      : "Show tower levels in Settings"}
+                  </span>
                   <span>Tab, then Enter or Space, also works</span>
                 </div>
               </section>
               <aside className="game-sidebar">
                 <section className="paper-panel room-code">
                   <span className="eyebrow">
-                    {room.publicRoom
-                      ? "Table reference"
-                      : "Pass this to your friend"}
+                    {room.publicRoom ? "Room code" : "Invite a friend"}
                   </span>
                   <div>
                     <strong>{room.id}</strong>
@@ -527,12 +629,12 @@ export default function App() {
                   </div>
                   <p className="subtle">
                     {room.publicRoom
-                      ? "The public queue supplies the other seat."
-                      : "Only someone with this code can join this table."}
+                      ? "The public queue will find an opponent using the same rules."
+                      : "Share this code with a friend to let them join."}
                   </p>
                 </section>
                 <section className="paper-panel players">
-                  <span className="eyebrow">The company</span>
+                  <span className="eyebrow">Players</span>
                   {room.players.map((player, seat) => (
                     <div
                       className={`player-card seat-${seat} ${seat === room.game?.turn ? "current" : ""}`}
@@ -554,7 +656,7 @@ export default function App() {
                               ? player.ready
                                 ? "ready"
                                 : "not ready"
-                              : "at the table"
+                              : "connected"
                             : "away"}
                         </p>
                       </div>
@@ -563,13 +665,13 @@ export default function App() {
                   {room.players.length < 2 && (
                     <div className="empty-seat">
                       <span>2</span>
-                      <p>One chair still waiting.</p>
+                      <p>Waiting for an opponent.</p>
                     </div>
                   )}
                 </section>
                 {room.status === "WAITING" ? (
                   <section className="paper-panel turn-panel">
-                    <span className="eyebrow">Before we begin</span>
+                    <span className="eyebrow">Match setup</span>
                     {room.rules === "GODS" ? (
                       <>
                         <label htmlFor="god">Your god power</label>
@@ -620,15 +722,13 @@ export default function App() {
                 ) : (
                   <section className="paper-panel turn-panel">
                     <span className="eyebrow">
-                      {room.status === "FINISHED"
-                        ? "The last page"
-                        : "Your turn notes"}
+                      {room.status === "FINISHED" ? "Result" : "Your power"}
                     </span>
                     <h3>
                       {room.status === "FINISHED"
                         ? room.game?.winner === room.yourSeat
-                          ? "Nicely built."
-                          : "Another day, another tower."
+                          ? "You win"
+                          : "Your opponent wins"
                         : powers[room.players[room.yourSeat].god]?.title}
                     </h3>
                     <p>
@@ -697,11 +797,15 @@ export default function App() {
         <span>Santorini · an island for two</span>
         <span>
           Designed and Developed by{" "}
-          <a href="https://github.com/Vael2196" target="_blank" rel="noreferrer">
+          <a
+            href="https://github.com/Vael2196"
+            target="_blank"
+            rel="noreferrer"
+          >
             Vael (Vadim Filyakin)
           </a>
         </span>
-        <span>Mind the domes.</span>
+        <span>Move. Build. Climb.</span>
       </footer>
     </div>
   );

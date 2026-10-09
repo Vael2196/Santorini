@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.flywaydb.core.Flyway;
 import java.net.*;
 import java.net.http.*;
 import java.util.Map;
@@ -101,6 +103,44 @@ class AccountIntegrationTest {
         var response = browser().send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/register"))
                 .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(Map.of("name", freshName(), "password", PASSWORD)))).build(), HttpResponse.BodyHandlers.ofString());
         assertEquals(403, response.statusCode());
+    }
+    @Test void preferencesPersistAcrossSessionsAndCannotChangeAnotherAccount() throws Exception {
+        var owner = accounts.register(freshName(), PASSWORD).session().account();
+        var other = accounts.register(freshName(), PASSWORD).session().account();
+        HttpClient client = browser();
+        assertEquals(200, post(client, "login", Map.of("name", owner.name(), "password", PASSWORD)).statusCode());
+        var defaults = new AccountService.Preferences("brown", false, true);
+        assertEquals(mapper.valueToTree(defaults), mapper.readTree(get(client, "me").body()).path("preferences"));
+        var choice = Map.of("cursorColour", "teal", "showLevels", true, "soundEnabled", false, "accountId", other.id());
+        var saved = post(client, "preferences", choice);
+        assertEquals(200, saved.statusCode(), saved.body());
+        assertEquals(new AccountService.Preferences("teal", true, false), accounts.preferences(owner));
+        assertEquals(defaults, accounts.preferences(other));
+        assertEquals(400, post(client, "preferences", Map.of("cursorColour", "magenta", "showLevels", true, "soundEnabled", false)).statusCode());
+        assertEquals(400, post(client, "preferences", Map.of("cursorColour", "teal")).statusCode());
+        var withoutCsrf = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/preferences"))
+                .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(choice))).build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(403, withoutCsrf.statusCode());
+        assertEquals(200, post(client, "logout", Map.of()).statusCode());
+        assertEquals(401, post(client, "preferences", choice).statusCode());
+        HttpClient returning = browser();
+        var loggedIn = post(returning, "login", Map.of("name", owner.name(), "password", PASSWORD));
+        assertEquals(mapper.readTree(saved.body()).path("preferences"), mapper.readTree(loggedIn.body()).path("preferences"));
+        var restarted = new AccountService(db, new NameRegistry(), 168);
+        assertEquals(new AccountService.Preferences("teal", true, false), restarted.preferences(owner));
+    }
+    @Test void preferenceMigrationSuppliesDefaultsWithoutChangingExistingAccounts() {
+        var source = new DriverManagerDataSource("jdbc:h2:mem:migration-" + UUID.randomUUID() + ";DB_CLOSE_DELAY=-1", "sa", "");
+        Flyway.configure().dataSource(source).target("1").load().migrate();
+        var legacy = new JdbcTemplate(source);
+        var id = UUID.randomUUID().toString();
+        legacy.update("INSERT INTO player_accounts (id, name_key, display_name, password_hash, created_at) VALUES (?, ?, ?, ?, ?)",
+                id, "legacy-name-digest", "Existing player", "existing-password-hash", 1234L);
+        Flyway.configure().dataSource(source).load().migrate();
+        var upgraded = new AccountService(legacy, new NameRegistry(), 168);
+        assertEquals(new AccountService.Preferences("brown", false, true), upgraded.preferences(new AccountService.Account(id, "Existing player")));
+        assertEquals("existing-password-hash", legacy.queryForObject("SELECT password_hash FROM player_accounts WHERE id = ?", String.class, id));
+        assertEquals(1234L, legacy.queryForObject("SELECT created_at FROM player_accounts WHERE id = ?", Long.class, id));
     }
     @Test void theRealDesktopClientCanCreateAndUseAnAccount() throws Exception {
         String name = freshName(); BlockingQueue<ServerEvent> events = new LinkedBlockingQueue<>();

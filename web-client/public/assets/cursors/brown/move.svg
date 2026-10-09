@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+<defs><filter id="colour" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+<feColorMatrix type="matrix" values="0 0 0 0 0.32941 0 0 0 0 0.20784 0 0 0 0 0.13333 0 0 0 1 0" result="tint"/>
+<feMorphology in="SourceAlpha" operator="dilate" radius="0.65" result="edge"/>
+<feFlood flood-color="#211a14" result="ink"/><feComposite in="ink" in2="edge" operator="in" result="outline"/>
+<feMerge><feMergeNode in="outline"/><feMergeNode in="tint"/></feMerge>
+</filter></defs><image width="32" height="32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAALGPC/xhBQAAADNQTFRF////////////////////////////////////////////////////////////AAAA////FbWC9gAAABB0Uk5Tb58vT4+v3+8PH1/Pfz+/AGy8Tu0AAACBSURBVDjLxdPdCoAgDAZQs/x3uvd/2i6EnDkcFNR3JezgnKiqQtTnIFq8kuIMAtJYZgdHgWGAT6RF4A65dVDYKXIHmQVRAiABLYHaAfDASaCsQSjLFsHQm54ADGVEPQCvEt5C38M+VUewI66BlQC+BtkJoPpcWo4IUI+2/utnPQAne6E765iS+x8AAAAASUVORK5CYII=" filter="url(#colour)"/></svg>

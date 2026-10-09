@@ -1,0 +1,3 @@
+ALTER TABLE player_accounts ADD COLUMN cursor_colour VARCHAR(16) NOT NULL DEFAULT 'brown';
+ALTER TABLE player_accounts ADD COLUMN show_levels BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE player_accounts ADD COLUMN sound_enabled BOOLEAN NOT NULL DEFAULT TRUE;

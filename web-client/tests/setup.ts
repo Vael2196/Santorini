@@ -1,6 +1,14 @@
 import "@testing-library/jest-dom/vitest";
 import WebSocket from "ws";
-import { afterEach } from "vitest";
+import { afterEach, vi } from "vitest";
+export const playedSounds: string[] = [];
+vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(function (
+  this: HTMLMediaElement,
+) {
+  playedSounds.push(this.src);
+  return Promise.resolve();
+});
+vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
 // Render the real React view while HTTP and sockets reach the real Spring server.
 // The small cookie jar stands in for browser transport, including HttpOnly cookies.
 const cookies = new Map<string, string>();
@@ -36,4 +44,8 @@ Object.defineProperty(globalThis, "WebSocket", {
   value: ServerSocket,
   configurable: true,
 });
-afterEach(() => cookies.clear());
+afterEach(() => {
+  cookies.clear();
+  playedSounds.length = 0;
+  localStorage.clear();
+});

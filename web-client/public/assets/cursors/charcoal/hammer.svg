@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+<defs><filter id="colour" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+<feColorMatrix type="matrix" values="0 0 0 0 0.18824 0 0 0 0 0.18824 0 0 0 0 0.20000 0 0 0 1 0" result="tint"/>
+<feMorphology in="SourceAlpha" operator="dilate" radius="0.65" result="edge"/>
+<feFlood flood-color="#211a14" result="ink"/><feComposite in="ink" in2="edge" operator="in" result="outline"/>
+<feMerge><feMergeNode in="outline"/><feMergeNode in="tint"/></feMerge>
+</filter></defs><image width="32" height="32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABeElEQVRYhe2WzXHCMBBGv5UCHKEAZqAD0gF0AB04HaSElBJKoAPogJiLZriYDiAnfiSxucgzDhOBbWF8CN9NHsvvWbO7NvDMfw8V3cDMAwATABsAMyL6vrfUNXjEv7Nk5nZd8MdJXIFXL5EDXp1EAXiaeZ3wNIM64dta4cFvz8zjkvBlMNwJJCXhpav/JUTYGAOlVN8Y0wcQl3mGuFhPAOzybDwej1iv1zidTh0iWqxWq3GwABHFAEa3JLTWG6UU9vs9pJQQQnSIaKaUioIEckp8NRqNV2vtm4NDCAEpJaSUU631PFMbvVsC3s+xq+oFgE7m8g7AyEkijuNICDGVUqLZbKLb7aLVasF3f+Ew88D1t7fPlVJRkiRsjPF1Sdh8YOY2Mw99rcbMvYxkNRI3BN9zzottyLy4JpDnBNIM7y7gJLK14ku1f05O4s9Ya/lwOGyNMaWGVRGJyANnrTVbaz8rFbiUOJ/PyUPhGYleWnBa64+Hwp8pmh+ndZdDmJkK6QAAAABJRU5ErkJggg==" filter="url(#colour)"/></svg>

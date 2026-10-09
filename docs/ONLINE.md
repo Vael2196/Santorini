@@ -35,7 +35,7 @@ The migration is shared by H2 and MySQL; Flyway applies it at startup.
 
 The browser authenticates through a revocable HttpOnly cookie with SameSite=Lax and a configured
 expiry (seven days by default). Public HTTPS deployments enable its Secure flag. CSRF tokens protect
-registration, login and logout. Passwords are 12 characters or longer and at most 72 UTF-8 bytes,
+registration, login, logout and preference updates. Passwords are 12 characters or longer and at most 72 UTF-8 bytes,
 matching BCrypt's input limit. Authentication endpoints limit attempts and concurrent password hashing.
 The desktop uses the same endpoints with cookies in memory and does not save passwords.
 
@@ -50,14 +50,21 @@ over a match; reconnecting with that match's secret token replaces the interrupt
 | Endpoint | Behaviour |
 | --- | --- |
 | `GET /api/auth/csrf` | Issues the CSRF cookie and returns the request token |
-| `GET /api/auth/me` | Returns the authenticated account, or an unauthenticated result |
+| `GET /api/auth/me` | Returns the authenticated account and preferences, or an unauthenticated result |
 | `POST /api/auth/register` | JSON name/password; creates an account and sets its session cookie |
 | `POST /api/auth/login` | JSON name/password; verifies the hash and sets a fresh session cookie |
+| `POST /api/auth/preferences` | Saves cursor colour, tower-level display and sound settings for the cookie’s account |
 | `POST /api/auth/logout` | Revokes the session, closes the account's game seat and clears the cookie |
 
 State-changing requests include `X-XSRF-TOKEN`. Responses carrying identity information are not cached.
 There is no email collection, password-recovery service, leaderboard or points ledger in this version.
 Stable account IDs and server-side identities are the foundation for those future changes.
+
+Account preferences live in `player_accounts`; migration V2 supplies defaults for existing accounts.
+`cursorColour` accepts `brown`, `charcoal`, `teal` or `ivory`; `showLevels` and `soundEnabled` are
+required booleans. Preference updates resolve the account exclusively from its authenticated cookie.
+The browser serialises saves and reports failures with a retry control. Logout waits for pending
+saves. Guest preferences use localStorage and have no server-side account record.
 
 ## Game protocol
 
@@ -101,6 +108,17 @@ Parchment textures and framed panels use CSS. Narrow screens put the board above
 SVG scales without changing coordinates or game rules. Motion honours reduced-motion preferences.
 Assets are served locally, with no third-party graphics, font or WebGL runtime. CC0 licence texts are
 kept beside the selected assets. The original archives are not copied into the repository.
+
+The board uses a dark perimeter and one diamond outline per tile. Keyboard focus and worker selection
+use that same outline. Optional level markers appear above buildings; tile descriptions always include
+levels for screen readers. Cursor variants are static SVGs with embedded image data and a dark edge,
+so colour changes need no canvas, WebGL or server rendering.
+
+A small sound bank plays locally served MP3 clips after a pointer or keyboard interaction. Turning
+sound off stops current playback as well as future cues. Moves, placements, builds and match results
+are sounded only after a confirmed state change. Initial snapshots, older versions and reconnects
+are silent. Background tabs do not play cues; playback failures never interrupt the game. The server
+and WebSocket protocol do not carry audio data, and settings add no match-state payload.
 
 ## Deployment decisions and limits
 

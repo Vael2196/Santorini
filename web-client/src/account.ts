@@ -1,3 +1,4 @@
+import type { Preferences } from "./preferences";
 export interface Account {
   id: string;
   name: string;
@@ -5,6 +6,7 @@ export interface Account {
 export interface AuthResult {
   authenticated: boolean;
   account?: Account;
+  preferences?: Preferences;
 }
 
 export async function accountRequest(
@@ -18,7 +20,9 @@ export async function accountRequest(
       cache: "no-store",
     });
     if (!csrf.ok)
-      throw new Error("The gatekeeper is unavailable. Try again in a moment.");
+      throw new Error(
+        "Account services are unavailable. Try again in a moment.",
+      );
     headers["X-XSRF-TOKEN"] = (await csrf.json()).token;
     headers["Content-Type"] = "application/json";
   }
@@ -32,7 +36,7 @@ export async function accountRequest(
   const result = await response.json();
   if (!response.ok)
     throw new Error(
-      result.message ?? "That request went astray. Please try again.",
+      result.message ?? "The request could not be completed. Please try again.",
     );
   return result;
 }
