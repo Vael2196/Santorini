@@ -18,6 +18,8 @@ test("sound waits for an interaction, mute stops active clips, and playback fail
   bank.play("build");
   await Promise.resolve();
   expect(voice.play).toHaveBeenCalledOnce();
+  bank.setVolume(50);
+  expect(voice.volume).toBeCloseTo(0.23 * 0.5);
   bank.setEnabled(false);
   expect(voice.pause).toHaveBeenCalledOnce();
   expect(voice.currentTime).toBe(0);

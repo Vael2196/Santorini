@@ -106,7 +106,7 @@ hit areas, so a hammer is never offered as a promise of an illegal build.
 
 Parchment textures and framed panels use CSS. Narrow screens put the board above the player notes;
 SVG scales without changing coordinates or game rules. Motion honours reduced-motion preferences.
-Assets are served locally, with no third-party graphics, font or WebGL runtime. CC0 licence texts are
+Assets are served locally, with no third-party graphics, font or WebGL runtime. Asset licence texts are
 kept beside the selected assets. The original archives are not copied into the repository.
 
 The board uses a dark perimeter and one diamond outline per tile. Keyboard focus and worker selection
@@ -123,7 +123,7 @@ and WebSocket protocol do not carry audio data, and settings add no match-state 
 ## Deployment decisions and limits
 
 One Spring Boot process holds rooms and guest reservations. A SQL store persists accounts and account
-sessions only. H2 uses a local file (a named volume in Compose); MySQL can use the existing shared
+sessions, preferences, ratings and completed ranked results. H2 uses a local file (a named volume in Compose); MySQL can use the existing shared
 Lightsail database service through an external Docker network. The web container serves static assets
 and proxies both `/api/` and `/ws`; the Java port is internal.
 
@@ -139,3 +139,65 @@ The Compose memory limits are starting points rather than measured capacity clai
 The single-server name registry assumes one application instance. Multiple replicas would need a shared
 reservation store, room ownership and routing; a load balancer alone would split matches. Online rooms
 are not recovered after a process restart. Custom maps, Tag and local save files remain desktop features.
+
+
+## Modes, computer practice and rating settlement
+
+`CREATE` and `QUEUE` accept `mode`: DUEL (two seats/two workers), THREE (three seats/two workers),
+FOUR_FFA (four seats/one worker) or TEAMS (four seats/one worker). TEAMS pairs seats 0/2 and 1/3;
+turns alternate sides. Four-seat modes use CLASSIC. THREE also supports the three unique god cards.
+Elimination removes the player's workers in free-for-all modes and skips their future turns. Team
+victory and forfeiture settle both teammates. `winner` remains a representative seat; `winners` lists
+all winning seats. Snapshots include `workersPerPlayer` and `eliminated` for ownership and rendering.
+
+`SOLO` creates a private DUEL with a ready computer seat. Its deterministic heuristic chooses only
+legal actions, favours heights and winning steps, and blocks immediate opponent wins when building.
+One scheduled action runs every 300 ms; optional movement ends after at most twelve proposed actions
+when an end action is legal. This is a practice opponent, not a claimed high-strength chess-style AI.
+No remote AI service, GPU or extra deployment process is required.
+
+`QUEUE` with `ranked: true` requires an authenticated account and a CLASSIC DUEL. Private joins and
+computer games cannot award ratings. A search begins within 100 rating points and widens by 50 every
+15 seconds, capped at 2000. The nearest eligible rating wins, with queue age breaking ties. Waiting
+searches are rechecked each second. A pair can complete at most three ranked games in 24 hours.
+
+Ratings start at 1200. Expected score is `1 / (1 + 10^((opponentRating-rating)/400))`; change is
+`round(32*(actualScore-expectedScore))`. Changes are zero-sum, with a 100-point floor. Ten completed
+games end the provisional label. Both accounts are locked in ID order. An ACTIVE match is inserted
+before play; settlement updates both ratings, counters and the COMPLETE result in one transaction.
+The match UUID is an idempotency key. Repeated settlement returns the recorded changes. Database
+failures retain a pending finished room for retry. On restart, ACTIVE records become ABORTED because
+boards are not durable. The public leaderboard exposes names and results, not account IDs, in pages
+of 50 (`GET /api/leaderboard?page=0`). Accounts with no completed ranked games are omitted.
+
+## Room chat
+
+`CHAT` accepts only `text`, independent of the game version and action acknowledgement. The server
+checks membership and publishes CHAT events containing room ID, sender seat/name, timestamp and a
+message UUID. CHAT_HISTORY restores the most recent 50 messages on joining/reconnecting. Solo games
+have no chat. Clients render strings as text; the Swing chat is a plain JTextArea. No upload endpoint,
+attachment field or HTML rendering is provided. Binary WebSocket frames are rejected by the handler.
+
+Messages are NFKC-normalised and limited to 280 code points and 1000 UTF-8 bytes before and after
+normalisation. Empty strings, control/format characters, URLs, domain names and email addresses are
+rejected. A small English strong-language list is masked; this is a basic filter, not comprehensive
+moderation. Each session may send ten accepted messages per minute, at least one second apart, and
+cannot repeat a message within thirty seconds. History is bounded and disappears with the room.
+Clients can hide chat; rejected browser drafts are restored. Chat errors do not clear pending game
+commands. Broader public use would benefit from reports, account sanctions and moderation tools.
+
+## Audio, typography and proxy trust
+
+Volume is an integer 0–100, default 80, separate from mute. A native range slider supports dragging
+and keyboard input; ± buttons change it by five. The master setting scales all clips and active voices;
+zero stops playback. Account updates are debounced and serialised, and logout flushes the last change.
+Guest settings remain local. V4 migrates old accounts; omitted legacy volume defaults to 80.
+Kalam regular/bold WOFF files are served locally with the SIL Open Font Licence included. The supplied
+windrose is the PNG favicon. The optional RPG GUI archive is not bundled (its readme specifies CC-BY).
+
+Compose enables Tomcat's native forwarded-header handling on the internal Java service. The web
+proxy preserves the host's X-Forwarded-Proto. A public host proxy must overwrite X-Forwarded-For with
+its observed client IP, set X-Forwarded-Proto itself and clear Forwarded. Only the loopback web port
+is published; Java remains internal. Do not expose this trusted proxy chain directly to the internet.
+Logs rotate at 10 MB with three files per container. Docker and MySQL require deployment testing;
+the automated database tests use H2.

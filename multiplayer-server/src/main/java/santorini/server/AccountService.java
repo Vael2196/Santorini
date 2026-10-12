@@ -24,8 +24,11 @@ public class AccountService {
     public record Account(String id, String name) {}
     public record Session(String hash, Account account, long expiresAt) {}
     public record Login(String token, Session session) {}
-    public record Preferences(String cursorColour, Boolean showLevels, Boolean soundEnabled) {
+    public record Preferences(String cursorColour, Boolean showLevels, Boolean soundEnabled, Integer volume) {
+        public Preferences(String cursorColour, Boolean showLevels, Boolean soundEnabled) { this(cursorColour, showLevels, soundEnabled, 80); }
         public Preferences {
+            if (volume == null) volume = 80;
+            if (volume < 0 || volume > 100) throw new IllegalArgumentException("Choose a volume from 0 to 100");
             if (cursorColour == null || !List.of("brown", "charcoal", "teal", "ivory").contains(cursorColour)
                     || showLevels == null || soundEnabled == null) {
                 throw new IllegalArgumentException("Choose a cursor colour and set both the tower-level and sound options.");
@@ -92,12 +95,12 @@ public class AccountService {
     public void revoke(Session session) { if (session != null) db.update("DELETE FROM account_sessions WHERE token_hash = ?", session.hash()); }
     public long cookieSeconds() { return lifetime / 1000; }
     public Preferences preferences(Account account) {
-        return db.queryForObject("SELECT cursor_colour, show_levels, sound_enabled FROM player_accounts WHERE id = ?",
-                (rs, row) -> new Preferences(rs.getString("cursor_colour"), rs.getBoolean("show_levels"), rs.getBoolean("sound_enabled")), account.id());
+        return db.queryForObject("SELECT cursor_colour, show_levels, sound_enabled, sound_volume FROM player_accounts WHERE id = ?",
+                (rs, row) -> new Preferences(rs.getString("cursor_colour"), rs.getBoolean("show_levels"), rs.getBoolean("sound_enabled"), rs.getInt("sound_volume")), account.id());
     }
     public void savePreferences(Account account, Preferences preferences) {
-        db.update("UPDATE player_accounts SET cursor_colour = ?, show_levels = ?, sound_enabled = ? WHERE id = ?",
-                preferences.cursorColour(), preferences.showLevels(), preferences.soundEnabled(), account.id());
+        db.update("UPDATE player_accounts SET cursor_colour = ?, show_levels = ?, sound_enabled = ?, sound_volume = ? WHERE id = ?",
+                preferences.cursorColour(), preferences.showLevels(), preferences.soundEnabled(), preferences.volume(), account.id());
     }
     private Login startSession(Account account) {
         byte[] bytes = new byte[32]; random.nextBytes(bytes);

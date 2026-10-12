@@ -7,7 +7,7 @@ out/
 
 # Maven, React and local runtime files
 **/target/
-web-client/node_modules/
+web-client/node_modules
 web-client/dist/
 web-client/test-results/
 web-client/playwright-report/
@@ -19,3 +19,6 @@ web-client/playwright-report/
 /data/
 **/*.mv.db
 **/*.trace.db
+
+/LIGHTSAIL.local.md
+/backups/

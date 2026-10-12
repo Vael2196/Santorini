@@ -18,12 +18,14 @@ class Guest {
   socket: WebSocket;
   room: RoomState | null = null;
   token: string | null = null;
+  events: ServerEvent[] = [];
   constructor() {
     this.socket = new WebSocket("ws://127.0.0.1:8080/ws", {
       origin: "http://localhost:5173",
     });
     this.socket.on("message", (data) => {
       const event: ServerEvent = JSON.parse(data.toString());
+      this.events.push(event);
       if (event.type === "WELCOME") this.token = event.token;
       if (event.type === "STATE") this.room = event.room;
       if (event.type === "LEFT") this.room = null;
@@ -234,6 +236,11 @@ test("accounts can register, survive a remount, log out and log in again", async
     target: { value: "teal" },
   });
   fireEvent.click(screen.getByLabelText("Show tower levels"));
+  fireEvent.click(screen.getByRole("button", { name: "Sound volume" }));
+  fireEvent.change(screen.getByRole("slider"), { target: { value: "35" } });
+  fireEvent.click(screen.getByRole("button", { name: "Increase volume" }));
+  expect(screen.getByRole("slider")).toHaveValue("40");
+  fireEvent.keyDown(document, { key: "Escape" });
   fireEvent.click(screen.getByRole("button", { name: "Mute all sounds" }));
   await screen.findByText("Saved to your account");
   // Remove device settings: returning choices must come from the account store.
@@ -248,6 +255,9 @@ test("accounts can register, survive a remount, log out and log in again", async
     expect(screen.getByLabelText("In-game cursor colour")).toHaveValue("teal"),
   );
   expect(screen.getByLabelText("Show tower levels")).toBeChecked();
+  fireEvent.click(screen.getByRole("button", { name: "Sound volume" }));
+  expect(screen.getByRole("slider")).toHaveValue("40");
+  fireEvent.keyDown(document, { key: "Escape" });
   expect(
     screen.getByRole("button", { name: "Enable all sounds" }),
   ).toBeVisible();
@@ -268,6 +278,9 @@ test("accounts can register, survive a remount, log out and log in again", async
   expect(screen.getByRole("status")).toHaveTextContent(accountName);
   expect(screen.getByLabelText("In-game cursor colour")).toHaveValue("teal");
   expect(screen.getByLabelText("Show tower levels")).toBeChecked();
+  fireEvent.click(screen.getByRole("button", { name: "Sound volume" }));
+  expect(screen.getByRole("slider")).toHaveValue("40");
+  fireEvent.keyDown(document, { key: "Escape" });
   expect(
     screen.getByRole("button", { name: "Enable all sounds" }),
   ).toBeVisible();
@@ -377,4 +390,150 @@ test("duplicate guest names are rejected and explicitly ending a visit releases 
   } finally {
     duplicate.close();
   }
+});
+
+test("computer practice places and takes a turn without another client", async () => {
+  await lobby();
+  fireEvent.change(screen.getByLabelText("Game rules"), {
+    target: { value: "CLASSIC" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: "Play against the computer" }),
+  );
+  await screen.findByText("Computer (AI)");
+  fireEvent.click(
+    screen.getByRole("button", { name: "Ready to play", exact: true }),
+  );
+  await clickCell(0, 0);
+  await clickCell(0, 1);
+  await waitFor(
+    () =>
+      expect(document.querySelector(".instruction")).toHaveTextContent(
+        "Choose a highlighted worker",
+      ),
+    { timeout: 5000 },
+  );
+  expect(document.querySelectorAll(".piece-1")).toHaveLength(2);
+  await clickCell(0, 0);
+  await clickCell(1, 0);
+  await clickCell(0, 0);
+  await waitFor(
+    () =>
+      expect(document.querySelector(".instruction")).toHaveTextContent(
+        "Choose a highlighted worker",
+      ),
+    { timeout: 5000 },
+  );
+  expect(
+    screen.queryByRole("region", { name: "Room chat" }),
+  ).not.toBeInTheDocument();
+});
+
+for (const [mode, count, workers] of [
+  ["THREE", 3, 2],
+  ["FOUR_FFA", 4, 1],
+  ["TEAMS", 4, 1],
+] as const) {
+  test(`${mode} fills all seats and renders the correct worker ownership`, async () => {
+    await lobby();
+    fireEvent.change(screen.getByLabelText("Players and teams"), {
+      target: { value: mode },
+    });
+    if (mode === "THREE")
+      fireEvent.change(screen.getByLabelText("Game rules"), {
+        target: { value: "CLASSIC" },
+      });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Create a private room" }),
+    );
+    await waitFor(() =>
+      expect(document.querySelector(".room-code strong")).not.toBeNull(),
+    );
+    const guests: Guest[] = [];
+    for (let i = 1; i < count; i++) {
+      const p = new Guest();
+      await p.connect();
+      p.send("JOIN", { roomId: roomCode() });
+      await waitFor(() => expect(p.room?.players).toHaveLength(i + 1));
+      guests.push(p);
+    }
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ready to play", exact: true }),
+    );
+    for (const p of guests) {
+      await waitFor(() => expect(p.room?.players[0].ready).toBe(true));
+      p.send("READY");
+      await waitFor(() =>
+        expect(p.room?.players[p.room.yourSeat].ready).toBe(true),
+      );
+    }
+    await waitFor(() => expect(guests[0].room?.status).toBe("PLAYING"));
+    for (let col = 0; col < workers; col++) await clickCell(0, col);
+    for (let seat = 1; seat < count; seat++)
+      for (let col = 0; col < workers; col++) {
+        const p = guests[seat - 1];
+        await waitFor(() => expect(p.room?.game?.turn).toBe(seat));
+        p.send("ACTION", {
+          action: { type: "PLACE", worker: null, row: seat, col },
+        });
+        await waitFor(() =>
+          expect(p.room?.game?.cells[seat * 5 + col].owner).toBe(seat),
+        );
+      }
+    await waitFor(() =>
+      expect(document.querySelectorAll(".piece")).toHaveLength(count * workers),
+    );
+    expect(document.querySelectorAll(".piece-2")).toHaveLength(workers);
+    guests[0].send("RESIGN");
+    if (mode === "TEAMS")
+      await waitFor(() =>
+        expect(document.querySelector(".instruction")).toHaveTextContent(
+          " and ",
+        ),
+      );
+    else {
+      await waitFor(() =>
+        expect(guests[0].room?.game?.eliminated).toContain(1),
+      );
+      expect(guests[0].room?.status).toBe("PLAYING");
+    }
+  });
+}
+
+test("room chat renders plain text, rejects links and restores history", async () => {
+  await lobby();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Create a private room" }),
+  );
+  await waitFor(() =>
+    expect(document.querySelector(".room-code strong")).not.toBeNull(),
+  );
+  const p = new Guest();
+  await p.connect();
+  p.send("JOIN", { roomId: roomCode() });
+  await waitFor(() => expect(p.room?.players).toHaveLength(2));
+  fireEvent.change(screen.getByLabelText("Message"), {
+    target: { value: "https://example.org" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+  await screen.findByText("Links and email addresses are not allowed in chat");
+  fireEvent.change(screen.getByLabelText("Message"), {
+    target: { value: "<img src=x> hello" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+  await waitFor(() =>
+    expect(p.events.some((e) => e.chat?.text === "<img src=x> hello")).toBe(
+      true,
+    ),
+  );
+  expect(screen.getByRole("log")).toHaveTextContent("<img src=x> hello");
+  expect(screen.getByRole("log").querySelector("img")).toBeNull();
+  expect(
+    screen.getByRole("button", { name: "Ready to play", exact: true }),
+  ).toBeEnabled();
+  cleanup();
+  render(<App />);
+  await waitFor(() =>
+    expect(screen.getByRole("log")).toHaveTextContent("<img src=x> hello"),
+  );
 });

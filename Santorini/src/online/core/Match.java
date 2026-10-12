@@ -10,6 +10,8 @@ import online.protocol.MatchSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /** Headless state machine using the existing model and god strategies.
  * Its owner serializes actions. There are no Swing, I/O or Spring dependencies. */
@@ -17,6 +19,8 @@ public final class Match {
     public static final List<String> GODS = List.of("Artemis", "Demeter", "Triton");
     private final Board board = Board.createSquare(5);
     private final List<Player> players = new ArrayList<>();
+    private final GameMode mode;
+    private final Set<Integer> eliminated = new LinkedHashSet<>();
     private String phase = "PLACE";
     private int turn;
     private Integer selected;
@@ -25,12 +29,15 @@ public final class Match {
     private int buildsMade;
 
     public Match(List<String> gods) {
-        if (gods.size() != 2) throw new IllegalArgumentException("Two players are required");
-        for (int seat = 0; seat < 2; seat++) {
+        this(gods, GameMode.DUEL);
+    }
+    public Match(List<String> gods, GameMode mode) {
+        this.mode = mode;
+        if (gods.size() != mode.seats) throw new IllegalArgumentException("The number of players does not match the mode");
+        for (int seat = 0; seat < mode.seats; seat++) {
             Player player = new Player(seat == 0 ? "Red" : "Blue");
             player.setGodPower(power(gods.get(seat)));
-            player.addWorker(new Worker(player));
-            player.addWorker(new Worker(player));
+            for (int i = 0; i < mode.workers; i++) player.addWorker(new Worker(player));
             players.add(player);
         }
     }
@@ -57,8 +64,7 @@ public final class Match {
                 players.get(turn).getWorkers().stream().filter(w -> w.getCurrentTile() == null)
                         .findFirst().orElseThrow().setStartingTile(board.getTile(action.row(), action.col()));
                 if (players.get(turn).getWorkers().stream().allMatch(w -> w.getCurrentTile() != null)) {
-                    if (turn == 0) turn = 1;
-                    else { turn = 0; phase = "SELECT"; }
+                    advancePlacement();
                 }
             }
             case "SELECT" -> { selected = action.worker(); phase = "MOVE"; }
@@ -85,26 +91,53 @@ public final class Match {
             case "END_TURN" -> endTurn();
             default -> throw new IllegalArgumentException("Unknown action");
         }
-        if (winner == null && !phase.equals("PLACE") && legalActions().isEmpty()) finish(1 - turn);
+        resolveBlocked();
     }
 
+    public boolean active(int seat) { return seat >= 0 && seat < mode.seats && !eliminated.contains(seat); }
+    public List<Integer> winners() {
+        if (winner == null) return List.of();
+        List<Integer> result = new ArrayList<>();
+        for (int i = 0; i < mode.seats; i++) if (mode.team(i) == mode.team(winner)) result.add(i);
+        return List.copyOf(result);
+    }
     public void resign(int seat) {
-        if (seat < 0 || seat > 1) throw new IllegalArgumentException("Invalid seat");
-        if (winner == null) finish(1 - seat);
+        if (seat < 0 || seat >= mode.seats) throw new IllegalArgumentException("Invalid seat");
+        if (winner != null || !active(seat)) return;
+        if (mode.teams) {
+            for (int i = 0; i < mode.seats; i++) if (mode.team(i) != mode.team(seat)) { finish(i); return; }
+        }
+        eliminated.add(seat);
+        for (Worker w : players.get(seat).getWorkers()) if (w.getCurrentTile() != null) w.getCurrentTile().removeOccupant();
+        if (mode.seats - eliminated.size() == 1) { finish(nextActive(seat)); return; }
+        if (seat == turn) {
+            resetTurn(); turn = nextActive(turn);
+            if (!phase.equals("PLACE")) phase = "SELECT";
+            else if (allPlaced()) { phase = "SELECT"; turn = nextActive(mode.seats - 1); }
+        }
+        resolveBlocked();
     }
-
+    private boolean allPlaced() {
+        for (int i = 0; i < mode.seats; i++) if (active(i) && players.get(i).getWorkers().stream().anyMatch(w -> w.getCurrentTile() == null)) return false;
+        return true;
+    }
+    private int nextActive(int seat) {
+        for (int i = 1; i <= mode.seats; i++) if (active((seat + i) % mode.seats)) return (seat + i) % mode.seats;
+        throw new IllegalStateException("No active player");
+    }
+    private void advancePlacement() {
+        turn = nextActive(turn);
+        if (allPlaced()) { phase = "SELECT"; turn = nextActive(mode.seats - 1); }
+    }
+    private void resolveBlocked() {
+        if (winner == null && !phase.equals("PLACE") && legalActions().isEmpty()) resign(turn);
+    }
     private void finish(int seat) { winner = seat; phase = "FINISHED"; }
-
-    private void endTurn() {
-        players.get(turn).getGodPower().resetTurn();
-        selected = null;
-        movesMade = 0;
-        buildsMade = 0;
-        turn = 1 - turn;
-        phase = "SELECT";
+    private void resetTurn() {
+        players.get(turn).getGodPower().resetTurn(); selected = null; movesMade = 0; buildsMade = 0;
     }
-
-    private Worker worker(int id) { return players.get(id / 2).getWorkers().get(id % 2); }
+    private void endTurn() { resetTurn(); turn = nextActive(turn); phase = "SELECT"; }
+    private Worker worker(int id) { return players.get(id / mode.workers).getWorkers().get(id % mode.workers); }
 
     public List<GameAction> legalActions() {
         if (winner != null) return List.of();
@@ -114,9 +147,9 @@ public final class Match {
                 if (!t.isOccupied()) actions.add(GameAction.at("PLACE", t.getX(), t.getY()));
             });
             case "SELECT" -> {
-                for (int index = 0; index < 2; index++) {
+                for (int index = 0; index < mode.workers; index++) {
                     if (!moveActions(players.get(turn).getWorkers().get(index)).isEmpty()) {
-                        actions.add(GameAction.select(turn * 2 + index));
+                        actions.add(GameAction.select(turn * mode.workers + index));
                     }
                 }
             }
@@ -174,11 +207,11 @@ public final class Match {
         List<MatchSnapshot.Cell> cells = new ArrayList<>();
         forEachTile(tile -> {
             Integer id = null;
-            for (int index = 0; index < 4; index++) if (tile.getOccupant() == worker(index)) id = index;
+            for (int index = 0; index < mode.seats * mode.workers; index++) if (tile.getOccupant() == worker(index)) id = index;
             cells.add(new MatchSnapshot.Cell(tile.getX(), tile.getY(), tile.getBuilding().getLevel(),
-                    tile.getBuilding().hasDome(), id, id == null ? null : id / 2));
+                    tile.getBuilding().hasDome(), id, id == null ? null : id / mode.workers));
         });
-        return new MatchSnapshot(phase, turn, selected, winner, List.copyOf(cells), legalActions());
+        return new MatchSnapshot(phase, turn, selected, winner, List.copyOf(cells), legalActions(), mode.workers, List.copyOf(eliminated), winners());
     }
 
     private static final class NoPower implements GodPower {

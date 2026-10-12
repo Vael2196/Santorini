@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { VolumeControl } from "./VolumeControl";
+import { Chat } from "./Chat";
+import { Leaderboard } from "./Leaderboard";
 import { Board } from "./Board";
-import { accountRequest, type Account } from "./account";
+import { accountRequest, type Account, type Ranking } from "./account";
 import type { RoomState } from "./types";
 import { useGame } from "./useGame";
 import { Settings } from "./Settings";
@@ -25,27 +28,65 @@ const powers: Record<string, { title: string; text: string }> = {
     text: "Move once, then build once.",
   },
 };
+const modes: Record<string, { label: string; note: string }> = {
+  DUEL: {
+    label: "Two players",
+    note: "Two workers each. Play Classic or choose god powers.",
+  },
+  THREE: {
+    label: "Three players",
+    note: "Two workers each. A blocked player leaves play; the others continue.",
+  },
+  FOUR_FFA: {
+    label: "Four players · free for all",
+    note: "One worker each, with Classic rules. The last player standing wins.",
+  },
+  TEAMS: {
+    label: "Four players · 2v2",
+    note: "One worker each, with Classic rules. Seats 1 and 3 face seats 2 and 4. A win or forfeit settles the whole team.",
+  },
+};
+function winners(room: RoomState) {
+  return (
+    room.game?.winners ?? (room.game?.winner != null ? [room.game.winner] : [])
+  );
+}
 function instruction(room: RoomState) {
-  if (room.paused)
-    return "Match paused. Waiting for your opponent to reconnect.";
+  if (room.paused) return "Match paused. Waiting for a player to reconnect.";
   if (!room.game)
-    return room.players.length < 2
-      ? "Waiting for a second player…"
-      : "Choose your power, then both players ready up.";
-  if (room.game.winner !== null)
-    return `${room.players[room.game.winner].name} wins!`;
+    return room.players.length < (room.capacity ?? 2)
+      ? room.capacity === 2
+        ? "Waiting for a second player…"
+        : `Waiting for players (${room.players.length}/${room.capacity ?? 2})…`
+      : room.rules === "GODS"
+        ? "Choose your power, then everyone ready up."
+        : "Everyone ready up to begin.";
+  if (room.game.winner !== null) {
+    const names = winners(room).map((seat) => room.players[seat].name);
+    return `${names.join(" and ")} ${names.length > 1 ? "win" : "wins"}!`;
+  }
+  if (room.game.eliminated?.includes(room.yourSeat))
+    return "You have left play. You can watch the remaining turns.";
   if (room.game.turn !== room.yourSeat)
     return `${room.players[room.game.turn].name} is taking their turn.`;
   return (
     (
       {
-        PLACE: "Place your two workers on empty tiles.",
+        PLACE:
+          room.game.workersPerPlayer === 1
+            ? "Place your worker on an empty tile."
+            : "Place your two workers on empty tiles.",
         SELECT: "Choose a highlighted worker.",
         MOVE: "Move to a highlighted tile.",
         BUILD: "Build on a highlighted tile.",
       } as Record<string, string>
     )[room.game.phase] ?? "Your turn."
   );
+}
+function leaveNote(room: RoomState) {
+  return room.mode === "THREE" || room.mode === "FOUR_FFA"
+    ? "Leave play? Your workers will be removed and the other players will continue."
+    : "Leave this match? The opposing side will win.";
 }
 function Rulebook() {
   return (
@@ -56,10 +97,11 @@ function Rulebook() {
       </div>
       <div className="rulebook-columns">
         <p>
-          Place two workers each. On your turn, choose one, move to an empty
-          neighbouring tile, then build beside it. Neighbours include diagonals.
-          Climb from level two to level three to win; a player with no legal
-          move loses.
+          Place your workers on empty tiles. On your turn, choose one, move to
+          an empty neighbouring tile, then build beside it. Neighbours include
+          diagonals. Climb from level two to level three to win; a player with
+          no legal move leaves play. Two- and three-player games use two workers
+          each; both four-player modes use one worker each.
         </p>
         <p>
           Domes close a tile. This version keeps the desktop game’s limit of one
@@ -83,6 +125,10 @@ export default function App() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
   const [checkingAccount, setCheckingAccount] = useState(true);
+  const [mode, setMode] = useState("DUEL");
+  const [ranked, setRanked] = useState(false);
+  const [ranking, setRanking] = useState<Ranking | null>(null);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [rules, setRules] = useState("GODS");
   const [code, setCode] = useState("");
   const [copied, setCopied] = useState(false);
@@ -91,11 +137,24 @@ export default function App() {
   const settings = usePreferences();
   const sounds = useSounds(
     !checkingAccount && settings.preferences.soundEnabled,
+    settings.preferences.volume,
     game.room,
     game.status,
     authError || game.error,
   );
   const room = game.room;
+  const solo = !!room?.players.some((p) => p.bot);
+  const roomChat =
+    room && !solo ? (
+      <Chat
+        key={room.id}
+        messages={game.messages}
+        send={game.sendChat}
+        error={game.chatError}
+        disabled={game.status !== "online" || game.chatBusy}
+        yourSeat={room.yourSeat}
+      />
+    ) : null;
   const connected = game.status === "online";
   const enabled = connected && !game.busy;
   const actions =
@@ -110,6 +169,7 @@ export default function App() {
       .then((result) => {
         if (active) {
           setAccount(result.account ?? null);
+          setRanking(result.ranking ?? null);
           settings.hydrate(result.account?.id ?? null, result.preferences);
         }
       })
@@ -124,6 +184,25 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (
+      account &&
+      room?.status === "FINISHED" &&
+      room.ranked &&
+      room.ratingChange
+    ) {
+      let active = true;
+      accountRequest("me")
+        .then((result) => {
+          if (active) setRanking(result.ranking ?? null);
+        })
+        .catch(() => {});
+      return () => {
+        active = false;
+      };
+    }
+  }, [account?.id, room?.id, room?.status, room?.ratingChange?.after]);
+
   async function enter() {
     setAuthError("");
     if (authMode === "guest") {
@@ -135,6 +214,7 @@ export default function App() {
       const result = await accountRequest(authMode, { name, password });
       setPassword("");
       setAccount(result.account!);
+      setRanking(result.ranking ?? null);
       settings.hydrate(result.account!.id, result.preferences);
       game.connect(result.account!.name);
     } catch (error) {
@@ -144,11 +224,7 @@ export default function App() {
     }
   }
   async function signOut() {
-    if (
-      room?.status === "PLAYING" &&
-      !confirm("Leave this match? Your opponent will win.")
-    )
-      return;
+    if (room?.status === "PLAYING" && !confirm(leaveNote(room))) return;
     setAuthBusy(true);
     setAuthError("");
     try {
@@ -157,6 +233,8 @@ export default function App() {
       if (account) await accountRequest("logout", {});
       settings.hydrate(null);
       setAccount(null);
+      setRanking(null);
+      setRanked(false);
       setName("");
       setPassword("");
       setAuthMode("guest");
@@ -254,6 +332,21 @@ export default function App() {
             </svg>
             Sound {settings.preferences.soundEnabled ? "on" : "off"}
           </button>
+          <VolumeControl
+            value={settings.preferences.volume}
+            disabled={checkingAccount || authBusy}
+            onChange={(volume) => {
+              sounds.setVolume(volume);
+              settings.update({ volume });
+            }}
+          />
+          <button
+            className="text-button"
+            aria-expanded={leaderboardOpen}
+            onClick={() => setLeaderboardOpen(!leaderboardOpen)}
+          >
+            Leaderboard
+          </button>
           <button
             className="text-button"
             aria-expanded={settingsOpen}
@@ -288,6 +381,7 @@ export default function App() {
           </div>
         )}
         {help && <Rulebook />}
+        {leaderboardOpen && <Leaderboard profile={ranking} />}
         {settingsOpen && (
           <div id="game-settings">
             <Settings
@@ -308,7 +402,7 @@ export default function App() {
         {!room ? (
           <div className="landing">
             <section className="intro">
-              <span className="eyebrow">A strategy game for two</span>
+              <span className="eyebrow">A strategy game for two to four</span>
               <h1>
                 Build the island.
                 <br />
@@ -339,7 +433,7 @@ export default function App() {
                 <span>Play online</span>
                 <p>
                   Meet someone in the public queue, or share a private room code
-                  with a friend. Browser and Java desktop players can sit at the
+                  with friends. Browser and Java desktop players can sit at the
                   same table.
                 </p>
               </div>
@@ -488,9 +582,63 @@ export default function App() {
                 <>
                   <span className="eyebrow">Playing as {playerName}</span>
                   <h2>Choose a match</h2>
+                  {account && ranking && (
+                    <p className="rank-summary">
+                      Rating <strong>{ranking.rating}</strong>
+                      {ranking.provisional ? " · provisional" : ""} ·{" "}
+                      {ranking.wins} wins · {ranking.losses} losses
+                    </p>
+                  )}
+                  <label className="ranked-choice">
+                    <input
+                      type="checkbox"
+                      checked={ranked}
+                      disabled={!account || !enabled}
+                      onChange={(e) => {
+                        setRanked(e.target.checked);
+                        if (e.target.checked) {
+                          setMode("DUEL");
+                          setRules("CLASSIC");
+                        }
+                      }}
+                    />
+                    Ranked match
+                  </label>
+                  <p className="subtle">
+                    {account
+                      ? "Ranked games use Classic duels. The queue favours similar ratings."
+                      : "Log in to join ranked games and the leaderboard."}
+                  </p>
+                  <label htmlFor="mode">Players and teams</label>
+                  <select
+                    id="mode"
+                    value={mode}
+                    disabled={ranked || !enabled}
+                    onChange={(e) => {
+                      setMode(e.target.value);
+                      if (
+                        e.target.value === "FOUR_FFA" ||
+                        e.target.value === "TEAMS"
+                      )
+                        setRules("CLASSIC");
+                    }}
+                  >
+                    {Object.entries(modes).map(([id, m]) => (
+                      <option key={id} value={id}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="subtle">{modes[mode].note}</p>
                   <label htmlFor="rules">Game rules</label>
                   <select
                     id="rules"
+                    disabled={
+                      ranked ||
+                      mode === "FOUR_FFA" ||
+                      mode === "TEAMS" ||
+                      !enabled
+                    }
                     value={rules}
                     onChange={(event) => setRules(event.target.value)}
                   >
@@ -500,20 +648,34 @@ export default function App() {
                   <button
                     className="primary full"
                     disabled={!enabled}
-                    onClick={() => game.send({ type: "QUEUE", rules })}
+                    onClick={() =>
+                      game.send({ type: "QUEUE", rules, mode, ranked })
+                    }
                   >
                     Find an opponent →
                   </button>
                   <p className="subtle">
                     Wait in the public queue for someone using these rules.
                   </p>
+                  <button
+                    className="secondary full"
+                    disabled={!enabled || ranked || mode !== "DUEL"}
+                    onClick={() =>
+                      game.send({ type: "SOLO", rules, mode: "DUEL" })
+                    }
+                  >
+                    Play against the computer
+                  </button>
+                  <p className="subtle">
+                    Unranked practice against a computer opponent.
+                  </p>
                   <div className="divider">
-                    <span>Or invite a friend</span>
+                    <span>Or invite friends</span>
                   </div>
                   <button
                     className="secondary full"
-                    disabled={!enabled}
-                    onClick={() => game.send({ type: "CREATE", rules })}
+                    disabled={!enabled || ranked}
+                    onClick={() => game.send({ type: "CREATE", rules, mode })}
                   >
                     Create a private room
                   </button>
@@ -554,7 +716,9 @@ export default function App() {
               <div>
                 <span className="eyebrow">
                   {room.publicRoom ? "Public room" : "Private room"} ·{" "}
-                  {room.rules === "GODS" ? "God powers" : "Classic"}
+                  {room.rules === "GODS" ? "God powers" : "Classic"} ·{" "}
+                  {modes[room.mode ?? "DUEL"].label}
+                  {room.ranked ? " · ranked" : ""}
                 </span>
                 <h1>
                   {room.status === "WAITING"
@@ -568,10 +732,7 @@ export default function App() {
                 className="text-button"
                 disabled={!enabled}
                 onClick={() => {
-                  if (
-                    room.status !== "PLAYING" ||
-                    confirm("Leave this match? Your opponent will win.")
-                  )
+                  if (room.status !== "PLAYING" || confirm(leaveNote(room)))
                     game.send({ type: "LEAVE" });
                 }}
               >
@@ -588,7 +749,7 @@ export default function App() {
                 </div>
                 {room.paused && (
                   <p className="subtle pause-note">
-                    Your opponent’s place is reserved until{" "}
+                    The disconnected player’s place is reserved until{" "}
                     {new Date(room.reconnectDeadline).toLocaleTimeString(
                       "en-GB",
                       { hour: "2-digit", minute: "2-digit", second: "2-digit" },
@@ -617,9 +778,16 @@ export default function App() {
                 </div>
               </section>
               <aside className="game-sidebar">
+                {room.status === "PLAYING" && roomChat}
                 <section className="paper-panel room-code">
                   <span className="eyebrow">
-                    {room.publicRoom ? "Room code" : "Invite a friend"}
+                    {solo
+                      ? "Computer practice"
+                      : room.ranked
+                        ? "Match reference"
+                        : room.publicRoom
+                          ? "Room code"
+                          : "Invite friends"}
                   </span>
                   <div>
                     <strong>{room.id}</strong>
@@ -628,9 +796,13 @@ export default function App() {
                     </button>
                   </div>
                   <p className="subtle">
-                    {room.publicRoom
-                      ? "The public queue will find an opponent using the same rules."
-                      : "Share this code with a friend to let them join."}
+                    {solo
+                      ? "A practice match. No rating points are awarded."
+                      : room.ranked
+                        ? "Ranked matches can only be joined through the queue."
+                        : room.publicRoom
+                          ? "The public queue finds players using this mode and these rules."
+                          : "Share this code with friends to let them join."}
                   </p>
                 </section>
                 <section className="paper-panel players">
@@ -649,6 +821,15 @@ export default function App() {
                           {seat === room.yourSeat && <small> · you</small>}
                         </strong>
                         <p>
+                          {room.mode === "TEAMS" && (
+                            <>Team {(player.team ?? seat % 2) + 1} · </>
+                          )}
+                          {player.rating != null && (
+                            <>Rating {player.rating} · </>
+                          )}
+                          {room.game?.eliminated?.includes(seat) && (
+                            <>Out of play · </>
+                          )}
                           {player.god === "None" ? "No god power" : player.god}{" "}
                           ·{" "}
                           {player.connected
@@ -662,11 +843,14 @@ export default function App() {
                       </div>
                     </div>
                   ))}
-                  {room.players.length < 2 && (
-                    <div className="empty-seat">
-                      <span>2</span>
-                      <p>Waiting for an opponent.</p>
-                    </div>
+                  {Array.from(
+                    { length: (room.capacity ?? 2) - room.players.length },
+                    (_, i) => (
+                      <div className="empty-seat" key={i}>
+                        <span>{room.players.length + i + 1}</span>
+                        <p>Waiting for a player.</p>
+                      </div>
+                    ),
                   )}
                 </section>
                 {room.status === "WAITING" ? (
@@ -694,6 +878,7 @@ export default function App() {
                                 disabled={room.players.some(
                                   (player, seat) =>
                                     seat !== room.yourSeat &&
+                                    !player.bot &&
                                     player.god === god,
                                 )}
                               >
@@ -726,9 +911,9 @@ export default function App() {
                     </span>
                     <h3>
                       {room.status === "FINISHED"
-                        ? room.game?.winner === room.yourSeat
+                        ? winners(room).includes(room.yourSeat)
                           ? "You win"
-                          : "Your opponent wins"
+                          : "The opposing side wins"
                         : powers[room.players[room.yourSeat].god]?.title}
                     </h3>
                     <p>
@@ -736,6 +921,13 @@ export default function App() {
                         ? `${instruction(room)} ${room.result ? `${room.result}.` : ""}`
                         : powers[room.players[room.yourSeat].god]?.text}
                     </p>
+                    {room.ranked && room.status === "FINISHED" && (
+                      <p className="rank-result">
+                        {room.ratingChange
+                          ? `Rating ${room.ratingChange.before} → ${room.ratingChange.after} (${room.ratingChange.delta >= 0 ? "+" : ""}${room.ratingChange.delta})`
+                          : "Your result is being saved. Rating points will appear shortly."}
+                      </p>
+                    )}
                     <div className="extra-actions">
                       {actions
                         .filter(
@@ -773,13 +965,12 @@ export default function App() {
                     ) : (
                       <button
                         className="text-button resign"
-                        disabled={!enabled}
+                        disabled={
+                          !enabled ||
+                          room.game?.eliminated?.includes(room.yourSeat)
+                        }
                         onClick={() => {
-                          if (
-                            confirm(
-                              "Resign this match? Your opponent will win.",
-                            )
-                          )
+                          if (confirm(leaveNote(room)))
                             game.send({ type: "RESIGN" });
                         }}
                       >
@@ -788,13 +979,14 @@ export default function App() {
                     )}
                   </section>
                 )}
+                {room.status !== "PLAYING" && roomChat}
               </aside>
             </div>
           </>
         )}
       </main>
       <footer className="footer">
-        <span>Santorini · an island for two</span>
+        <span>Santorini · towers and tactics</span>
         <span>
           Designed and Developed by{" "}
           <a

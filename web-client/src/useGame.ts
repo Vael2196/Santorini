@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Command, Identity, RoomState, ServerEvent } from "./types";
+import type {
+  ChatMessage,
+  Command,
+  Identity,
+  RoomState,
+  ServerEvent,
+} from "./types";
 
 const TOKEN_KEY = "santorini.session.v1";
 export function useGame() {
@@ -7,6 +13,25 @@ export function useGame() {
   const bye = useRef<(() => void) | null>(null);
   const [status, setStatus] = useState("offline");
   const [room, setRoom] = useState<RoomState | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatError, setChatError] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
+  const roomId = useRef<string | null>(null);
+  const chatPending = useRef<{
+    id: string;
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
+  const clearChat = () => {
+    if (chatPending.current) clearTimeout(chatPending.current.timer);
+    chatPending.current = null;
+    setChatBusy(false);
+  };
+  const resetChat = () => {
+    roomId.current = null;
+    setMessages([]);
+    setChatError("");
+    clearChat();
+  };
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const socket = useRef<WebSocket | null>(null);
@@ -52,6 +77,10 @@ export function useGame() {
           setStatus("online");
           setError("");
         } else if (event.type === "STATE" && event.room) {
+          if (roomId.current !== event.room.id) {
+            resetChat();
+            roomId.current = event.room.id;
+          }
           setRoom((previous) =>
             previous?.id === event.room!.id &&
             previous.version > event.room!.version
@@ -59,11 +88,29 @@ export function useGame() {
               : event.room,
           );
           clearPending();
+        } else if (
+          event.type === "CHAT_HISTORY" &&
+          event.roomId === roomId.current
+        ) {
+          setMessages((event.history ?? []).slice(-50));
+        } else if (
+          event.type === "CHAT" &&
+          event.roomId === roomId.current &&
+          event.chat
+        ) {
+          setMessages((previous) =>
+            [
+              ...previous.filter((m) => m.id !== event.chat!.id),
+              event.chat!,
+            ].slice(-50),
+          );
+          if (event.requestId === chatPending.current?.id) clearChat();
         } else if (event.type === "BYE") {
           wanted.current = false;
           token.current = null;
           sessionStorage.removeItem(TOKEN_KEY);
           setRoom(null);
+          resetChat();
           setIdentity(null);
           setStatus("offline");
           bye.current?.();
@@ -71,9 +118,15 @@ export function useGame() {
           ws.close();
         } else if (event.type === "LEFT") {
           setRoom(null);
+          resetChat();
           clearPending();
           if (event.message) setError(event.message);
         } else if (event.type === "ERROR") {
+          if (event.requestId && event.requestId === chatPending.current?.id) {
+            clearChat();
+            setChatError(event.message ?? "Your message could not be sent.");
+            return;
+          }
           clearPending();
           setError(event.message ?? "Something went wrong.");
           if (event.code === "SESSION_EXPIRED") {
@@ -81,6 +134,7 @@ export function useGame() {
             sessionStorage.removeItem(TOKEN_KEY);
             wanted.current = false;
             setRoom(null);
+            resetChat();
             ws.close();
             setStatus("offline");
           } else if (!token.current) {
@@ -97,6 +151,7 @@ export function useGame() {
     ws.onclose = () => {
       if (socket.current !== ws) return;
       clearPending();
+      clearChat();
       if (!wanted.current) {
         setStatus("offline");
         return;
@@ -125,6 +180,7 @@ export function useGame() {
       wanted.current = false;
       if (retry.current) clearTimeout(retry.current);
       if (pending.current) clearTimeout(pending.current);
+      if (chatPending.current) clearTimeout(chatPending.current.timer);
       clearInterval(heartbeat);
       const ws = socket.current;
       socket.current = null;
@@ -179,10 +235,44 @@ export function useGame() {
     token.current = null;
     sessionStorage.removeItem(TOKEN_KEY);
     setRoom(null);
+    resetChat();
     setIdentity(null);
     setStatus("offline");
     setError("");
     clearPending();
   };
-  return { status, room, identity, error, busy, connect, disconnect, send };
+  const sendChat = (text: string) => {
+    if (
+      status !== "online" ||
+      !room ||
+      chatPending.current ||
+      socket.current?.readyState !== WebSocket.OPEN
+    )
+      return;
+    const id = crypto.randomUUID();
+    setChatError("");
+    setChatBusy(true);
+    chatPending.current = {
+      id,
+      timer: setTimeout(() => {
+        clearChat();
+        setChatError("Your message took too long to send. Please try again.");
+      }, 8000),
+    };
+    socket.current.send(JSON.stringify({ type: "CHAT", requestId: id, text }));
+  };
+  return {
+    status,
+    room,
+    identity,
+    error,
+    busy,
+    connect,
+    disconnect,
+    send,
+    messages,
+    chatError,
+    chatBusy,
+    sendChat,
+  };
 }

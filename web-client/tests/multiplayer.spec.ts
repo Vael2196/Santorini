@@ -162,6 +162,10 @@ test("accounts reserve their names and can log back in after logout", async ({
     await owner.getByRole("button", { name: "Settings", exact: true }).click();
     await owner.getByLabel("In-game cursor colour").selectOption("teal");
     await owner.getByLabel("Show tower levels").check();
+    await owner.getByRole("button", { name: "Sound volume" }).click();
+    await owner.getByRole("slider").fill("35");
+    await owner.getByRole("button", { name: "Increase volume" }).click();
+    await owner.getByRole("slider").press("Escape");
     await owner.getByRole("button", { name: "Mute all sounds" }).click();
     await expect(
       owner.getByText("Saved to your account", { exact: true }),
@@ -183,11 +187,191 @@ test("accounts reserve their names and can log back in after logout", async ({
     );
     await expect(owner.getByLabel("In-game cursor colour")).toHaveValue("teal");
     await expect(owner.getByLabel("Show tower levels")).toBeChecked();
+    await owner.getByRole("button", { name: "Sound volume" }).click();
+    await expect(owner.getByRole("slider")).toHaveValue("40");
+    await owner.getByRole("slider").press("Escape");
     await expect(
       owner.getByRole("button", { name: "Enable all sounds" }),
     ).toBeVisible();
   } finally {
     await owner.close();
     await guest.close();
+  }
+});
+
+test("volume supports dragging and keyboard input, and handwriting and favicon load", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await lobby(page, "Volume");
+  await page.getByRole("button", { name: "Sound volume" }).click();
+  const slider = page.getByRole("slider");
+  const box = await slider.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + box!.width * 0.8, box!.y + box!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + box!.width * 0.4, box!.y + box!.height / 2, {
+    steps: 8,
+  });
+  await page.mouse.up();
+  const changed = Number(await slider.inputValue());
+  expect(changed).toBeGreaterThan(20);
+  expect(changed).toBeLessThan(60);
+  await page.getByRole("button", { name: "Increase volume" }).click();
+  expect(Number(await slider.inputValue())).toBe(changed + 5);
+  await slider.focus();
+  await slider.press("ArrowLeft");
+  expect(Number(await slider.inputValue())).toBe(changed + 4);
+  await slider.press("Escape");
+  await expect(
+    page.getByRole("dialog", { name: "Sound volume" }),
+  ).not.toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "Sound volume" }).click();
+  await expect(slider).toHaveValue(String(changed + 4));
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  expect(
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      return (
+        document.fonts.check("16px Kalam") &&
+        getComputedStyle(document.body).fontFamily.includes("Kalam")
+      );
+    }),
+  ).toBe(true);
+  const favicon = await page.request.get("/favicon.png");
+  expect(favicon.ok()).toBe(true);
+  expect(favicon.headers()["content-type"]).toContain("image/png");
+});
+
+test("solo practice advances the computer's placements and turn", async ({
+  page,
+}) => {
+  await lobby(page, "Practice");
+  await page.getByLabel("Game rules").selectOption("CLASSIC");
+  await page.getByRole("button", { name: "Play against the computer" }).click();
+  await expect(page.locator(".player-card")).toHaveCount(2);
+  await ready(page);
+  await page.getByTestId("cell-0-0").click();
+  await page.getByTestId("cell-0-1").click();
+  await expect(page.locator(".instruction")).toContainText(
+    "Choose a highlighted worker",
+    { timeout: 5000 },
+  );
+  await expect(page.locator(".piece-1")).toHaveCount(2);
+  await page.getByTestId("cell-0-0").click();
+  await page.getByTestId("cell-1-0").click();
+  await page.getByTestId("cell-0-0").click();
+  await expect(page.locator(".instruction")).toContainText(
+    "Choose a highlighted worker",
+    { timeout: 5000 },
+  );
+  await expect(
+    page.getByRole("region", { name: "Room chat" }),
+  ).not.toBeVisible();
+});
+
+for (const [mode, count, workers] of [
+  ["THREE", 3, 2],
+  ["FOUR_FFA", 4, 1],
+  ["TEAMS", 4, 1],
+] as const) {
+  test(`${mode} plays with every seat and handles a forfeit`, async ({
+    browser,
+  }) => {
+    const pages: Page[] = [];
+    try {
+      for (let i = 0; i < count; i++) {
+        const p = await browser.newPage();
+        pages.push(p);
+        await lobby(p, "Mode player " + i);
+      }
+      const host = pages[0];
+      await host.getByLabel("Players and teams").selectOption(mode);
+      if (mode === "THREE")
+        await host.getByLabel("Game rules").selectOption("CLASSIC");
+      else await expect(host.getByLabel("Game rules")).toHaveValue("CLASSIC");
+      await host.getByRole("button", { name: "Create a private room" }).click();
+      const code = await roomCode(host);
+      for (const p of pages.slice(1)) {
+        await p.getByLabel("Have a room code?").fill(code);
+        await p.getByRole("button", { name: "Join", exact: true }).click();
+        await expect(p.locator(".room-code strong")).toHaveText(code);
+      }
+      await expect(host.locator(".player-card")).toHaveCount(count);
+      for (const p of pages) await ready(p);
+      for (let seat = 0; seat < count; seat++)
+        for (let col = 0; col < workers; col++)
+          await pages[seat].getByTestId(`cell-${seat}-${col}`).click();
+      await expect(host.locator(".piece")).toHaveCount(count * workers);
+      await expect(host.locator(".piece-2")).toHaveCount(workers);
+      pages[1].once("dialog", (d) => d.accept());
+      await pages[1]
+        .getByRole("button", { name: "Concede this match" })
+        .click();
+      if (mode === "TEAMS")
+        await expect(host.locator(".instruction")).toContainText(" and ");
+      else {
+        await expect(host.locator(".piece-1")).toHaveCount(0);
+        await expect(
+          host.getByRole("button", { name: "Concede this match" }),
+        ).toBeEnabled();
+      }
+    } finally {
+      for (const p of pages) await p.close();
+    }
+  });
+}
+
+test("ranked accounts settle ratings, exchange plain-text chat and appear on the leaderboard", async ({
+  browser,
+}) => {
+  const a = await browser.newPage(),
+    b = await browser.newPage();
+  const names = [
+    "Rated-A-" + crypto.randomUUID().slice(0, 6),
+    "Rated-B-" + crypto.randomUUID().slice(0, 6),
+  ];
+  try {
+    for (const [i, p] of [a, b].entries()) {
+      await p.goto("/");
+      await p
+        .getByRole("button", { name: "Create account", exact: true })
+        .click();
+      await p.getByLabel("Account name").fill(names[i]);
+      await p
+        .getByLabel("Password", { exact: true })
+        .fill("a rather sturdy password");
+      await p.getByRole("button", { name: "Create account and play" }).click();
+      await expect(p.locator(".rank-summary")).toContainText("1200");
+      await p.getByLabel("Ranked match", { exact: true }).check();
+      await p.getByRole("button", { name: "Find an opponent" }).click();
+    }
+    await expect(a.locator(".player-card")).toHaveCount(2);
+    await ready(a);
+    await ready(b);
+    await a
+      .getByLabel("Message", { exact: true })
+      .fill("<img src=x> good game");
+    await a.getByRole("button", { name: "Send message" }).click();
+    await expect(b.getByRole("log")).toContainText("<img src=x> good game");
+    await expect(b.getByRole("log").locator("img")).toHaveCount(0);
+    b.once("dialog", (d) => d.accept());
+    await b.getByRole("button", { name: "Concede this match" }).click();
+    await expect(a.locator(".rank-result")).toContainText("1200 → 1216 (+16)");
+    await expect(b.locator(".rank-result")).toContainText("1200 → 1184 (-16)");
+    await a.getByRole("button", { name: "Leaderboard", exact: true }).click();
+    await expect(
+      a.getByRole("row").filter({ hasText: names[0] }),
+    ).toContainText("1216");
+    await a.reload();
+    await expect(a.locator(".rank-result")).toContainText("1216");
+  } finally {
+    await a.close();
+    await b.close();
   }
 });

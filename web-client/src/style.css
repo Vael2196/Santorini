@@ -1,5 +1,17 @@
+@font-face {
+  font-family: Kalam;
+  src: url("/assets/fonts/Kalam-Regular.woff") format("woff");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Kalam;
+  src: url("/assets/fonts/Kalam-Bold.woff") format("woff");
+  font-weight: 700;
+  font-display: swap;
+}
 :root {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Kalam", "Segoe Print", cursive;
   color: #3b3025;
   background: #e3cc9f;
   font-synthesis: none;
@@ -9,7 +21,7 @@
   --sea: #39666d;
   --line: #a88c60;
   --paper: #f5e7c9;
-  --ui-font: "Trebuchet MS", Verdana, sans-serif;
+  --ui-font: "Kalam", "Segoe Print", cursive;
 }
 * {
   box-sizing: border-box;
@@ -101,7 +113,7 @@ select {
   font-family: var(--ui-font);
   text-transform: uppercase;
   letter-spacing: 2px;
-  font-size: 9px;
+  font-size: 14px;
   margin-top: 10px;
 }
 .header-right {
@@ -111,7 +123,7 @@ select {
   align-items: center;
   gap: 21px;
   font-family: var(--ui-font);
-  font-size: 12px;
+  font-size: 14px;
 }
 .connection {
   display: flex;
@@ -138,7 +150,7 @@ select {
   text-decoration: underline;
   text-underline-offset: 4px;
   font-family: var(--ui-font);
-  font-size: 12px;
+  font-size: 14px;
 }
 .text-button:hover {
   color: var(--rust);
@@ -150,7 +162,7 @@ main {
 .eyebrow {
   display: block;
   font-family: var(--ui-font);
-  font-size: 10px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 2px;
   font-weight: 700;
@@ -193,7 +205,7 @@ main {
 .map-note {
   display: block;
   text-align: center;
-  font-size: 11px;
+  font-size: 14px;
   font-style: italic;
   color: #856744;
   margin-top: -24px;
@@ -228,7 +240,7 @@ main {
 }
 .field-notes span {
   font-family: var(--ui-font);
-  font-size: 9px;
+  font-size: 14px;
   letter-spacing: 1px;
   text-transform: uppercase;
   line-height: 1.7;
@@ -236,7 +248,7 @@ main {
 }
 .field-notes p {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.7;
   color: #6f5a3e;
 }
@@ -285,7 +297,7 @@ main {
 .auth-tabs button {
   border: 0;
   background: none;
-  font-size: 11px;
+  font-size: 14px;
   padding: 12px 8px;
   flex: 1;
   white-space: nowrap;
@@ -305,7 +317,7 @@ main {
 label {
   display: block;
   font-family: var(--ui-font);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.3px;
   margin: 19px 0 8px;
@@ -319,12 +331,12 @@ select {
   min-height: 44px;
   padding: 10px 12px;
   font-family: var(--ui-font);
-  font-size: 13px;
+  font-size: 14px;
   box-shadow: inset 0 2px 4px #684c2410;
 }
 input::placeholder {
   color: #9b8260;
-  font-size: 12px;
+  font-size: 14px;
 }
 select {
   cursor: pointer;
@@ -336,7 +348,7 @@ select {
   min-height: 45px;
   padding: 12px 18px;
   font-family: var(--ui-font);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.4px;
   border: 1px solid #795a3d;
@@ -372,7 +384,7 @@ select {
   margin-top: 18px;
 }
 .subtle {
-  font-size: 11px !important;
+  font-size: 14px !important;
   line-height: 1.7 !important;
   color: #826b4c !important;
 }
@@ -380,7 +392,7 @@ select {
   margin: 7px 0 0;
 }
 .fine-print {
-  font-size: 10px !important;
+  font-size: 14px !important;
   font-family: var(--ui-font);
   line-height: 1.8 !important;
   border-top: 1px solid #c8ae82;
@@ -392,7 +404,7 @@ select {
   align-items: center;
   gap: 12px;
   margin: 25px 0 5px;
-  font: 9px var(--ui-font);
+  font: 14px var(--ui-font);
   letter-spacing: 1px;
   text-transform: uppercase;
   color: #947954;
@@ -417,7 +429,7 @@ select {
   border-left: 3px solid #a05638;
   padding: 13px 18px;
   margin: 0 0 25px;
-  font: 13px/1.6 var(--ui-font);
+  font: 14px/1.6 var(--ui-font);
   color: #6c3f2d;
 }
 .rulebook {
@@ -543,14 +555,15 @@ select {
   stroke-dasharray: none;
 }
 .coordinate {
-  font: 8px var(--ui-font);
+  font: 14px var(--ui-font);
   fill: #8d6f48;
   opacity: 0.85;
 }
 .axis-label {
   font:
-    12px Georgia,
-    serif;
+    14px "Kalam",
+    "Segoe Print",
+    cursive;
   fill: #8b6a43;
 }
 .cursor-build.legal .tile-hit {
@@ -581,7 +594,7 @@ select {
   margin: 0 12px 0;
   padding-top: 13px;
   border-top: 1px solid #ccb78f;
-  font: 9px/1.5 var(--ui-font);
+  font: 14px/1.5 var(--ui-font);
   color: #59452f;
 }
 .board-key span {
@@ -633,11 +646,11 @@ select {
   overflow-wrap: anywhere;
 }
 .player-card strong small {
-  font: 9px var(--ui-font);
+  font: 14px var(--ui-font);
   color: #8f7654;
 }
 .player-card p {
-  font: 10px/1.7 var(--ui-font);
+  font: 14px/1.7 var(--ui-font);
   margin: 6px 0 0;
 }
 .player-marker {
@@ -648,7 +661,7 @@ select {
   background: var(--rust);
   color: #f5dfb7;
   clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%);
-  font: 11px var(--ui-font);
+  font: 14px var(--ui-font);
   flex-shrink: 0;
   box-shadow: 0 2px 3px #56362340;
 }
@@ -674,7 +687,7 @@ select {
 }
 .empty-seat p {
   font-style: italic;
-  font-size: 12px;
+  font-size: 14px;
   margin: 0;
 }
 .turn-panel h3 {
@@ -684,7 +697,7 @@ select {
   margin: 15px 0 8px;
 }
 .turn-panel p {
-  font-size: 12px;
+  font-size: 14px;
   margin-bottom: 0;
 }
 .extra-actions {
@@ -709,7 +722,7 @@ select {
   justify-content: space-between;
   gap: 20px;
   padding: 19px 0 24px;
-  font: 9px/1.5 var(--ui-font);
+  font: 14px/1.5 var(--ui-font);
   letter-spacing: 0.6px;
   color: #8a7050;
 }
@@ -730,7 +743,7 @@ select {
   margin: 10px 0;
 }
 .settings-panel p {
-  font-size: 12px;
+  font-size: 14px;
 }
 .settings-controls {
   display: grid;
@@ -768,7 +781,7 @@ select {
   color: #51412e;
 }
 .settings-error {
-  font: 12px/1.6 var(--ui-font);
+  font: 14px/1.6 var(--ui-font);
   color: #713723;
 }
 @media (max-width: 650px) {
@@ -835,13 +848,13 @@ select {
     height: 40px;
   }
   .brand small {
-    font-size: 8px;
+    font-size: 14px;
     letter-spacing: 1.4px;
   }
   .header-right {
     flex-wrap: wrap;
     justify-content: flex-end;
-    font-size: 10px;
+    font-size: 14px;
     gap: 7px 13px;
   }
   .connection {
@@ -917,12 +930,12 @@ select {
     gap: 10px 15px;
   }
   .connection {
-    font-size: 9px;
+    font-size: 14px;
     justify-content: flex-start;
     overflow-wrap: anywhere;
   }
   .text-button {
-    font-size: 10px;
+    font-size: 14px;
   }
   .brand {
     font-size: 25px;
@@ -933,7 +946,7 @@ select {
     height: 34px;
   }
   .brand small {
-    font-size: 7px;
+    font-size: 14px;
     letter-spacing: 0.7px;
   }
   .landing {
@@ -950,7 +963,7 @@ select {
     max-width: 430px;
   }
   .intro .eyebrow {
-    font-size: 9px;
+    font-size: 14px;
   }
   .map-illustration {
     margin: -5px 0 0;
@@ -958,7 +971,7 @@ select {
   }
   .map-note {
     margin-top: -19px;
-    font-size: 10px;
+    font-size: 14px;
   }
   .field-notes {
     margin-top: 24px;
@@ -966,10 +979,10 @@ select {
     gap: 12px;
   }
   .field-notes span {
-    font-size: 8px;
+    font-size: 14px;
   }
   .field-notes p {
-    font-size: 11px;
+    font-size: 14px;
   }
   .lobby {
     margin-top: 0;
@@ -986,7 +999,7 @@ select {
     letter-spacing: -0.7px;
   }
   .room-heading .eyebrow {
-    font-size: 8px;
+    font-size: 14px;
     letter-spacing: 1px;
   }
   .board-panel {
@@ -997,10 +1010,10 @@ select {
     padding-bottom: 13px;
   }
   .instruction {
-    font-size: 13px !important;
+    font-size: 14px !important;
   }
   .board-key {
-    font-size: 8px;
+    font-size: 14px;
     gap: 5px 10px;
     margin: 0 10px;
   }
@@ -1011,7 +1024,7 @@ select {
     padding: 20px 17px;
   }
   .game-sidebar .eyebrow {
-    font-size: 8px;
+    font-size: 14px;
     letter-spacing: 1px;
   }
   .room-code strong {
@@ -1023,7 +1036,7 @@ select {
     flex-wrap: wrap;
   }
   .player-card strong {
-    font-size: 13px;
+    font-size: 14px;
   }
   .player-marker {
     width: 22px;
@@ -1033,7 +1046,7 @@ select {
     gap: 8px;
   }
   .player-card p {
-    font-size: 9px;
+    font-size: 14px;
   }
   .rulebook-columns {
     grid-template-columns: 1fr;
@@ -1043,7 +1056,7 @@ select {
     padding: 25px;
   }
   .footer {
-    font-size: 8px;
+    font-size: 14px;
     flex-wrap: wrap;
     gap: 7px 15px;
     margin-top: 5px;
@@ -1059,5 +1072,154 @@ select {
   * {
     scroll-behavior: auto !important;
     transition: none !important;
+  }
+}
+
+.volume-control {
+  position: relative;
+}
+.volume-popup {
+  background: #f5e7c9 url("/assets/paper.png") repeat;
+  background-size: 820px;
+  position: absolute;
+  z-index: 30;
+  top: 100%;
+  right: 0;
+  width: 290px;
+  padding: 18px;
+}
+.volume-popup label {
+  display: flex;
+  justify-content: space-between;
+}
+.volume-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.volume-row input {
+  min-width: 0;
+  padding: 0;
+  accent-color: var(--rust);
+}
+.volume-row button {
+  min-width: 36px;
+  height: 36px;
+}
+.volume-popup p {
+  margin: 10px 0 0;
+}
+.ranked-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+}
+.ranked-choice input {
+  width: auto;
+  accent-color: var(--rust);
+}
+.rank-summary,
+.rank-result {
+  padding: 8px 12px;
+  background: #e9d8b7;
+  border: 1px solid var(--line);
+}
+.leaderboard {
+  margin: 0 0 24px;
+  padding: 28px;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.leaderboard table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+}
+.leaderboard th,
+.leaderboard td {
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.leaderboard-pages {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+.chat-panel {
+  padding: 18px;
+  min-width: 0;
+}
+.chat-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.chat-heading h3 {
+  margin: 0;
+}
+.chat-heading small {
+  font-size: 14px;
+}
+.chat-log {
+  height: 180px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  margin: 12px 0;
+  padding-right: 6px;
+}
+.chat-log p {
+  margin: 0 0 12px;
+}
+.chat-log time {
+  font-size: 14px;
+  color: var(--muted);
+}
+.chat-log span {
+  display: block;
+  white-space: pre-wrap;
+}
+.chat-panel input {
+  margin-bottom: 10px;
+}
+.chat-seat-0 {
+  color: var(--rust);
+}
+.chat-seat-1 {
+  color: var(--sea);
+}
+.chat-seat-2 {
+  color: #566b3c;
+}
+.chat-seat-3 {
+  color: #704568;
+}
+.seat-2 .player-marker,
+.turn-dot[data-seat="2"] {
+  background: #566b3c;
+}
+.seat-3 .player-marker,
+.turn-dot[data-seat="3"] {
+  background: #704568;
+}
+.header-right {
+  flex-wrap: wrap;
+}
+@media (max-width: 650px) {
+  .volume-popup {
+    right: auto;
+    left: -65px;
+  }
+  .leaderboard {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 800px) {
+  .chat-panel {
+    grid-column: 1 / -1;
   }
 }

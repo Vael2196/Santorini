@@ -14,6 +14,14 @@ public final class OnlineFrame extends JFrame {
     private final JPasswordField password = new JPasswordField();
     private final JTextField code = new JTextField();
     private final JComboBox<String> rules = new JComboBox<>(new String[]{"GODS", "CLASSIC"});
+    private final JComboBox<String> modes = new JComboBox<>(new String[]{"DUEL","THREE","FOUR_FFA","TEAMS"});
+    private final JCheckBox ranked = new JCheckBox("Ranked Classic duel");
+    private final JButton solo = new JButton("Computer practice"), chatSend = new JButton("Send message");
+    private final JTextArea chatLog = new JTextArea(8,22);
+    private final JTextField chatText = new JTextField();
+    private final java.util.LinkedHashMap<String,ChatMessage> messages = new java.util.LinkedHashMap<>();
+    private String chatRequest;
+    private boolean account;
     private final JComboBox<String> gods = new JComboBox<>(new String[]{"Artemis", "Demeter", "Triton"});
     private final JLabel connection = new JLabel("Offline"), information = new JLabel("Connect, then create a room or find an opponent.");
     private final JLabel roomCode = new JLabel("No room"), players = new JLabel(" ");
@@ -23,7 +31,7 @@ public final class OnlineFrame extends JFrame {
     private final JPanel extra = new JPanel();
     private final JButton[] cells = new JButton[25];
     private final NetworkClient client;
-    private final Timer timeout;
+    private final Timer timeout, chatTimeout;
     private RoomState room;
     private boolean connected, busy, rendering;
 
@@ -37,6 +45,8 @@ public final class OnlineFrame extends JFrame {
                 }));
         timeout = new Timer(8000, e -> { busy = false; information.setText("No response yet. Wait for the refreshed board before retrying."); render(); });
         timeout.setRepeats(false);
+        chatTimeout = new Timer(8000, e -> { chatRequest=null; render(); information.setText("Your message took too long to send. Please try again."); });
+        chatTimeout.setRepeats(false);
         JPanel root = new JPanel(new BorderLayout(12, 12)); root.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18)); setContentPane(root);
         JPanel top = new JPanel(new GridLayout(0, 2, 8, 6));
         top.add(new JLabel("Server URL")); top.add(server);
@@ -45,6 +55,7 @@ public final class OnlineFrame extends JFrame {
         top.add(new JLabel("Password (accounts only)")); top.add(password);
         password.setEnabled(false);
         identity.addActionListener(e -> { password.setEnabled(identity.getSelectedIndex() != 0 && !connected); password.setText(""); });
+        top.add(new JLabel("Players / teams")); top.add(modes); top.add(ranked); top.add(solo);
         top.add(connection); top.add(connect); top.add(new JLabel("Rules")); top.add(rules); top.add(queue); top.add(create);
         top.add(code); top.add(join); top.add(roomCode); top.add(players); top.add(gods); top.add(ready); root.add(top, BorderLayout.NORTH);
         JPanel board = new JPanel(new GridLayout(5, 5, 6, 6));
@@ -53,6 +64,12 @@ public final class OnlineFrame extends JFrame {
             cells[i].setOpaque(true); cells[i].addActionListener(e -> click(index)); board.add(cells[i]);
         }
         root.add(board, BorderLayout.CENTER);
+        JPanel chatPanel = new JPanel(new BorderLayout(4,4)); chatLog.setEditable(false); chatLog.setLineWrap(true); chatLog.setWrapStyleWord(true);
+        chatPanel.add(new JScrollPane(chatLog),BorderLayout.CENTER); JPanel chatEntry = new JPanel(new BorderLayout());chatEntry.add(chatText);chatEntry.add(chatSend,BorderLayout.SOUTH);chatPanel.add(chatEntry,BorderLayout.SOUTH);root.add(chatPanel,BorderLayout.EAST);
+        chatSend.addActionListener(e -> sendChat()); chatText.addActionListener(e -> sendChat());
+        ranked.addActionListener(e -> { if(ranked.isSelected()){modes.setSelectedItem("DUEL");rules.setSelectedItem("CLASSIC");}render(); });
+        modes.addActionListener(e -> { if(!rendering && (modes.getSelectedIndex()>1))rules.setSelectedItem("CLASSIC");render(); });
+        solo.addActionListener(e -> send("SOLO",null,null));
         JPanel bottom = new JPanel(new BorderLayout()); bottom.add(information, BorderLayout.NORTH);
         JPanel buttons = new JPanel(); buttons.add(extra); buttons.add(leave); buttons.add(resign); buttons.add(disconnect); bottom.add(buttons, BorderLayout.SOUTH); root.add(bottom, BorderLayout.SOUTH);
         connect.addActionListener(e -> {
@@ -72,9 +89,9 @@ public final class OnlineFrame extends JFrame {
         queue.addActionListener(e -> send("QUEUE", null, null)); create.addActionListener(e -> send("CREATE", null, null));
         join.addActionListener(e -> send("JOIN", code.getText().strip(), null)); ready.addActionListener(e -> send("READY", null, null));
         gods.addActionListener(e -> { if (!rendering && connected && room != null) send("CHOOSE_GOD", null, null); });
-        leave.addActionListener(e -> { if (room == null || !room.status().equals("PLAYING") || confirm("Leave this match? Your opponent wins.")) send("LEAVE", null, null); });
+        leave.addActionListener(e -> { if (room == null || !room.status().equals("PLAYING") || confirm("Leave this match? Your workers leave play; this may end the match.")) send("LEAVE", null, null); });
         disconnect.addActionListener(e -> {
-            if (room != null && room.status().equals("PLAYING") && !confirm("End this visit? Your opponent will win.")) return;
+            if (room != null && room.status().equals("PLAYING") && !confirm("End this visit? Your workers leave play; this may end the match.")) return;
             busy = true; render();
             client.disconnect().whenComplete((ignored, error) -> SwingUtilities.invokeLater(() -> {
                 connected = false; busy = false; room = null; timeout.stop(); render();
@@ -85,7 +102,7 @@ public final class OnlineFrame extends JFrame {
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent event) {
                 // Closing the window disconnects; the server reserves this seat for the grace period.
-                timeout.stop(); client.close();
+                timeout.stop(); chatTimeout.stop(); client.close();
             }
         });
         render(); setVisible(true);
@@ -95,11 +112,30 @@ public final class OnlineFrame extends JFrame {
     private void send(String type, String roomId, GameAction action) {
         if (!connected || busy) return;
         busy = true; timeout.restart();
-        client.command(type, roomId, (String) rules.getSelectedItem(), (String) gods.getSelectedItem(), room, action);
+        client.send(new ClientCommand(type,java.util.UUID.randomUUID().toString(),null,null,roomId,(String)rules.getSelectedItem(),(String)gods.getSelectedItem(),room==null?null:room.version(),action,(String)modes.getSelectedItem(),type.equals("QUEUE") && ranked.isSelected(),null));
         render();
     }
+    private void sendChat() {
+        if (!connected || room == null || chatRequest != null || chatText.getText().isBlank()) return;
+        chatRequest = java.util.UUID.randomUUID().toString();
+        client.send(new ClientCommand("CHAT",chatRequest,null,null,null,null,null,null,null,null,false,chatText.getText()));
+        chatSend.setEnabled(false);
+        chatTimeout.restart();
+    }
+    private void renderChat() {
+        chatLog.setText(String.join("\n",messages.values().stream().map(m -> m.name()+": "+m.text()).toList()));
+        chatLog.setCaretPosition(chatLog.getDocument().getLength());
+    }
     private void receive(ServerEvent event) {
+        if(event.type().equals("WELCOME"))account=event.identity()!=null && !event.identity().guest();
+        if(event.type().equals("CHAT") && room != null && room.id().equals(event.roomId())) {
+            messages.put(event.chat().id(),event.chat());while(messages.size()>50)messages.remove(messages.keySet().iterator().next());
+            if(event.requestId()!=null && event.requestId().equals(chatRequest)){chatRequest=null;chatTimeout.stop();chatText.setText("");}renderChat();render();return;
+        }
+        if(event.type().equals("CHAT_HISTORY") && room != null && room.id().equals(event.roomId())) {messages.clear();for(ChatMessage m:event.history())messages.put(m.id(),m);renderChat();return;}
+        if(event.type().equals("ERROR") && event.requestId()!=null && event.requestId().equals(chatRequest)){chatRequest=null;chatTimeout.stop();render();information.setText(event.message());return;}
         if (event.type().equals("STATE") && event.room() != null) {
+            if(room==null || !room.id().equals(event.room().id())){messages.clear();renderChat();}
             if (room == null || !room.id().equals(event.room().id()) || event.room().version() >= room.version()) room = event.room();
             busy = false; timeout.stop();
         } else if (event.type().equals("LEFT")) { room = null; busy = false; timeout.stop(); }
@@ -124,20 +160,26 @@ public final class OnlineFrame extends JFrame {
         connect.setEnabled(!connected && connection.getText().equals("Offline"));
         server.setEnabled(!connected); name.setEnabled(!connected); identity.setEnabled(!connected); password.setEnabled(!connected && identity.getSelectedIndex() != 0);
         queue.setEnabled(available && room == null); create.setEnabled(available && room == null); join.setEnabled(available && room == null);
-        rules.setEnabled(room == null && available); code.setEnabled(room == null);
+        ranked.setEnabled(room==null && available && account); if(!account)ranked.setSelected(false);
+        modes.setEnabled(room==null && available && !ranked.isSelected());
+        solo.setEnabled(room==null && available && !ranked.isSelected() && modes.getSelectedIndex()==0);
+        create.setEnabled(create.isEnabled() && !ranked.isSelected());
+        chatSend.setEnabled(available && chatRequest==null && room!=null && room.players().stream().noneMatch(RoomState.Seat::bot));
+        chatText.setEnabled(chatSend.isEnabled());
+        rules.setEnabled(room == null && available && !ranked.isSelected() && modes.getSelectedIndex()<2); code.setEnabled(room == null);
         disconnect.setEnabled(available);
         ready.setEnabled(available && room != null && room.status().equals("WAITING"));
         gods.setEnabled(ready.isEnabled() && room.rules().equals("GODS"));
-        leave.setEnabled(available && room != null); resign.setEnabled(available && room != null && room.status().equals("PLAYING"));
+        leave.setEnabled(available && room != null); resign.setEnabled(available && room != null && room.status().equals("PLAYING") && !room.game().eliminated().contains(room.yourSeat()));
         if (room == null) {
             roomCode.setText("No room"); players.setText(" "); information.setText("Connect, then create a room or find an opponent.");
         } else {
             roomCode.setText((room.publicRoom() ? "Public" : "Private") + " · " + room.id());
-            players.setText("Players: " + String.join(" vs ", room.players().stream().map(p -> p.name() + " (" + p.god() + ")").toList()));
+            players.setText("Players: " + String.join(" vs ", room.players().stream().map(p -> p.name() + " (" + p.god() + (room.mode().equals("TEAMS")?", team "+(p.team()+1):"") + (p.rating()!=null?", rating "+p.rating():"") + ")").toList()));
             RoomState.Seat me = room.players().get(room.yourSeat());
             gods.setSelectedItem(me.god()); ready.setText(me.ready() ? "Not ready" : "Ready");
-            information.setText(room.game() == null ? "Waiting for two ready players. Share your room code with a friend."
-                    : room.game().winner() != null ? "Winner: " + room.players().get(room.game().winner()).name() + " · " + room.result()
+            information.setText(room.game() == null ? "Waiting for " + room.capacity() + " ready players."
+                    : room.game().winner() != null ? "Winner: " + String.join(" and ",room.game().winners().stream().map(i -> room.players().get(i).name()).toList()) + " · " + room.result()
                     : room.paused() ? "Paused: opponent has 60 seconds to reconnect."
                     : room.game().turn() == room.yourSeat() ? "Your turn · " + room.game().phase() : "Opponent's turn · " + room.game().phase());
         }
@@ -153,8 +195,8 @@ public final class OnlineFrame extends JFrame {
             MatchSnapshot.Cell cell = room == null || room.game() == null ? null : room.game().cells().get(i);
             String coordinate = "" + (char) ('A' + col) + (row + 1);
             cells[i].setText("<html><center>" + coordinate + "<br>" + (cell == null ? "" : cell.dome() ? "DOME" : "Level " + cell.level())
-                    + (cell != null && cell.worker() != null ? "<br>" + (cell.owner() == 0 ? "Red" : "Blue") + " " + (cell.worker() % 2 + 1) : "") + "</center></html>");
-            cells[i].setBackground(cell != null && cell.owner() != null ? cell.owner() == 0 ? new Color(209, 161, 126) : new Color(151, 181, 181) : new Color(235, 222, 192));
+                    + (cell != null && cell.worker() != null ? "<br>" + "Player " + (cell.owner()+1) + " · " + (cell.worker() % room.game().workersPerPlayer() + 1) : "") + "</center></html>");
+            cells[i].setBackground(cell != null && cell.owner() != null ? new Color[]{new Color(209,161,126),new Color(151,181,181),new Color(155,175,130),new Color(172,140,164)}[cell.owner()] : new Color(235, 222, 192));
             cells[i].setEnabled(actions.stream().anyMatch(a -> a.type().equals("SELECT") ? cell != null && a.worker().equals(cell.worker()) : a.row() != null && a.row() == row && a.col() == col));
         }
         rendering = false; extra.revalidate(); extra.repaint();

@@ -3,7 +3,15 @@ export interface Account {
   id: string;
   name: string;
 }
+export interface Ranking {
+  rating: number;
+  wins: number;
+  losses: number;
+  games: number;
+  provisional: boolean;
+}
 export interface AuthResult {
+  ranking?: Ranking;
   authenticated: boolean;
   account?: Account;
   preferences?: Preferences;

@@ -111,11 +111,13 @@ class AccountIntegrationTest {
         assertEquals(200, post(client, "login", Map.of("name", owner.name(), "password", PASSWORD)).statusCode());
         var defaults = new AccountService.Preferences("brown", false, true);
         assertEquals(mapper.valueToTree(defaults), mapper.readTree(get(client, "me").body()).path("preferences"));
-        var choice = Map.of("cursorColour", "teal", "showLevels", true, "soundEnabled", false, "accountId", other.id());
+        var choice = Map.of("cursorColour", "teal", "showLevels", true, "soundEnabled", false, "volume", 35, "accountId", other.id());
         var saved = post(client, "preferences", choice);
         assertEquals(200, saved.statusCode(), saved.body());
-        assertEquals(new AccountService.Preferences("teal", true, false), accounts.preferences(owner));
+        assertEquals(new AccountService.Preferences("teal", true, false, 35), accounts.preferences(owner));
         assertEquals(defaults, accounts.preferences(other));
+        assertEquals(400, post(client, "preferences", Map.of("cursorColour", "teal", "showLevels", true, "soundEnabled", false, "volume", 101)).statusCode());
+        assertEquals(400, post(client, "preferences", Map.of("cursorColour", "teal", "showLevels", true, "soundEnabled", false, "volume", -1)).statusCode());
         assertEquals(400, post(client, "preferences", Map.of("cursorColour", "magenta", "showLevels", true, "soundEnabled", false)).statusCode());
         assertEquals(400, post(client, "preferences", Map.of("cursorColour", "teal")).statusCode());
         var withoutCsrf = client.send(HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/auth/preferences"))
@@ -127,7 +129,7 @@ class AccountIntegrationTest {
         var loggedIn = post(returning, "login", Map.of("name", owner.name(), "password", PASSWORD));
         assertEquals(mapper.readTree(saved.body()).path("preferences"), mapper.readTree(loggedIn.body()).path("preferences"));
         var restarted = new AccountService(db, new NameRegistry(), 168);
-        assertEquals(new AccountService.Preferences("teal", true, false), restarted.preferences(owner));
+        assertEquals(new AccountService.Preferences("teal", true, false, 35), restarted.preferences(owner));
     }
     @Test void preferenceMigrationSuppliesDefaultsWithoutChangingExistingAccounts() {
         var source = new DriverManagerDataSource("jdbc:h2:mem:migration-" + UUID.randomUUID() + ";DB_CLOSE_DELAY=-1", "sa", "");

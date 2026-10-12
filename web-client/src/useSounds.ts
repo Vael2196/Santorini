@@ -4,6 +4,7 @@ import type { RoomState } from "./types";
 
 export function useSounds(
   enabled: boolean,
+  volume: number,
   room: RoomState | null,
   status: string,
   error: string,
@@ -12,6 +13,9 @@ export function useSounds(
   if (!bank.current) bank.current = new SoundBank();
   const previous = useRef<RoomState | null>(null);
   const previousError = useRef("");
+  useEffect(() => {
+    bank.current!.setVolume(volume);
+  }, [volume]);
   useEffect(() => {
     bank.current!.setEnabled(enabled);
   }, [enabled]);

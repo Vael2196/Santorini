@@ -14,6 +14,7 @@ const clips = {
 export type Sound = keyof typeof clips;
 
 export class SoundBank {
+  private volume = 0.8;
   private enabled = true;
   private unlocked = false;
   private voices = new Map<Sound, HTMLAudioElement>();
@@ -25,9 +26,16 @@ export class SoundBank {
     this.enabled = enabled;
     if (!enabled) this.stop();
   }
+  setVolume(percent: number) {
+    this.volume = Math.max(0, Math.min(100, percent)) / 100;
+    for (const [sound, voice] of this.voices)
+      voice.volume = clips[sound] * this.volume;
+    if (!this.volume) this.stop();
+  }
   play(sound: Sound) {
     if (
       !this.enabled ||
+      !this.volume ||
       !this.unlocked ||
       document.visibilityState === "hidden"
     )
@@ -36,7 +44,7 @@ export class SoundBank {
       let voice = this.voices.get(sound);
       if (!voice) {
         voice = this.createAudio(`/assets/audio/${sound}.mp3`);
-        voice.volume = clips[sound];
+        voice.volume = clips[sound] * this.volume;
         this.voices.set(sound, voice);
       }
       voice.currentTime = 0;
@@ -83,6 +91,8 @@ export function roomSound(
     )
   )
     return "build";
+  if ((after.eliminated?.length ?? 0) > (before.eliminated?.length ?? 0))
+    return "ready";
   if (after.cells.some((cell, i) => cell.worker !== before.cells[i].worker))
     return before.phase === "PLACE" ? "place" : "move";
   if (

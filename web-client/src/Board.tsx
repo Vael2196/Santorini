@@ -38,7 +38,7 @@ function Worker({
       <ellipse cy="5" rx="12" ry="6" fill="#30241e" opacity=".2" />
       <path
         d="M-10 0 L-8-20 Q0-27 8-20 L10 0 Q0 8-10 0Z"
-        fill={owner === 0 ? "#a34e36" : "#39666d"}
+        fill={["#a34e36", "#39666d", "#566b3c", "#704568"][owner]}
         stroke="#f3dfb4"
         strokeWidth="1.5"
       />
@@ -46,7 +46,7 @@ function Worker({
         cy="-25"
         rx="6.5"
         ry="6.5"
-        fill={owner === 0 ? "#c66a46" : "#528790"}
+        fill={["#c66a46", "#528790", "#7b9458", "#966589"][owner]}
         stroke="#eed8b2"
         strokeWidth="1.3"
       />
@@ -54,8 +54,8 @@ function Worker({
         y="-7"
         textAnchor="middle"
         fill="#fff5df"
-        fontSize="9"
-        fontFamily="sans-serif"
+        fontSize="12"
+        fontFamily="var(--ui-font)"
         fontWeight="700"
       >
         {number}
@@ -69,12 +69,14 @@ function Tile({
   selected,
   label,
   showLevels,
+  workersPerPlayer,
   onAction,
 }: {
   cell: Cell;
   action?: GameAction;
   selected: boolean;
   label: string;
+  workersPerPlayer: number;
   showLevels: boolean;
   onAction?: (action: GameAction) => void;
 }) {
@@ -153,7 +155,11 @@ function Tile({
         {cell.owner !== null && (
           <Worker
             owner={cell.owner}
-            number={(cell.worker! % 2) + 1}
+            number={
+              workersPerPlayer === 1
+                ? cell.owner! + 1
+                : (cell.worker! % workersPerPlayer) + 1
+            }
             y={-height - 4}
           />
         )}
@@ -180,7 +186,7 @@ function Tile({
               y="4"
               textAnchor="middle"
               fontSize="13"
-              fontFamily="sans-serif"
+              fontFamily="var(--ui-font)"
               fontWeight="700"
               fill="#29221b"
             >
@@ -341,6 +347,7 @@ export function Board({
               key={`${cell.row}-${cell.col}`}
               cell={cell}
               showLevels={showLevels}
+              workersPerPlayer={room?.game?.workersPerPlayer ?? 2}
               action={illustration ? undefined : cellAction(cell, actions)}
               selected={
                 cell.worker !== null &&

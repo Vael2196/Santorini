@@ -18,10 +18,11 @@ public class AuthController {
     public record Credentials(String name, String password) {}
     private final AccountService accounts;
     private final RoomService rooms;
+    private final RankingService rankings;
     private final boolean secure;
     private final Map<String, Attempts> limits = new HashMap<>();
-    public AuthController(AccountService accounts, RoomService rooms, @Value("${auth.secure-cookie:false}") boolean secure) {
-        this.accounts = accounts; this.rooms = rooms; this.secure = secure;
+    public AuthController(AccountService accounts, RoomService rooms, RankingService rankings, @Value("${auth.secure-cookie:false}") boolean secure) {
+        this.rankings = rankings; this.accounts = accounts; this.rooms = rooms; this.secure = secure;
     }
     @GetMapping("/csrf") public Map<String,String> csrf(CsrfToken token) { return Map.of("token", token.getToken()); }
     @GetMapping("/me") public ResponseEntity<?> me(HttpServletRequest request) {
@@ -36,7 +37,7 @@ public class AuthController {
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(profile(session.account()));
     }
     private Map<String, Object> profile(AccountService.Account account) {
-        return Map.of("authenticated", true, "account", account, "preferences", accounts.preferences(account));
+        return Map.of("authenticated", true, "account", account, "preferences", accounts.preferences(account), "ranking", rankings.profile(account.id()));
     }
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> register(@RequestBody Credentials body, HttpServletRequest request) {

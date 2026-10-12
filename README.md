@@ -1,8 +1,8 @@
 # Santorini
 
-A strategy game for two players: move your workers, build towers and reach the third level.
+A strategy game for two to four players: move your workers, build towers and reach the third level.
 
-Santorini is a Java board-game project with a browser client and online multiplayer. Two players
+Santorini is a Java board-game project with a browser client and online multiplayer. Players
 can meet through the public queue or share a private room code. A browser player and a Java
 desktop player use the same server and can play at the same table.
 
@@ -17,20 +17,27 @@ active guests and registered accounts, ignoring case and surrounding spaces. A d
 has a short window to return before the name becomes available again.
 
 Players can also create an account with a name and password. Account names and identities persist
-between visits and server restarts. These stable identities provide a starting point for a future
-leaderboard and points system; neither is implemented yet.
+between visits and server restarts. Logged-in players can join ranked Classic duels and appear on the leaderboard. Ratings begin at
+1200 and use Elo: an upset earns more points than a win against a lower-rated opponent. The queue
+favours similar ratings and gradually broadens its search. The first ten results are provisional.
 
 Private rooms admit players with an eight-character code. The public queue pairs players using
-the same rules and never selects a private room. Each player chooses a power, marks themselves
-ready, and places two workers. The server then controls the turn sequence and legal actions.
+the same rules and never selects a private room. Players choose a mode and rules, then mark themselves
+ready and place their workers. Two- and three-player games give each player two workers. Four-player
+games use one worker each, either in a free for all or two teams (seats 1/3 against 2/4). Four-player
+games use Classic rules. A blocked player leaves a free-for-all game; a team win or forfeit settles
+the whole team. A private practice mode adds a computer opponent without awarding ranking points. The server then controls the turn sequence and legal actions.
 
 The browser view uses parchment textures, isometric stone tiles, framed panels and small tool
 cursors. A hammer marks a legal build; a boot marks a legal move. Numbered workers, coordinates, available actions
 and optional tower-level markers identify the board state without relying on colour alone. Legal tiles
 support keyboard navigation and activation. The board has a dark outline for contrast. Game settings
-offer four cursor colours (dark brown by default) and optional level markers above buildings. Short
-interaction sounds share one mute button in the header. Settings are saved to an account for registered
+offer four cursor colours (dark brown by default) and optional level markers above buildings. The self-hosted Kalam handwriting font keeps the parchment legible. Short
+interaction sounds share one mute button and a volume popup with a slider and ± controls in the header. Settings are saved to an account for registered
 players and on the device for guests.
+
+Room chat accepts plain text only, with length and rate limits, link blocking and a basic word filter.
+Messages belong to the room and disappear when it expires. Players can hide chat locally.
 
 ## Rules in this version
 
@@ -57,7 +64,7 @@ moving or building without making an invalid move.
 | Spring Boot server | Authoritative matches, rooms, matchmaking, reconnection and account sessions |
 | React + TypeScript client | Browser controls and an SVG board using static image assets |
 | Java Swing client | Original local game and a network view using the shared protocol |
-| SQL account store | Persistent account IDs, password hashes and revocable session records |
+| SQL account store | Persistent account IDs, password hashes revocable session records, preferences and ranked results |
 | Nginx | Production static files and HTTP/WebSocket reverse proxy |
 
 Clients send intentions rather than replacement boards. The server checks the player's seat, turn,
@@ -74,7 +81,7 @@ including an existing shared database service. Flyway manages the schema. The br
 SVG rather than a WebGL renderer, so the artwork adds no rendering work to the server.
 
 See [the architecture notes](docs/ONLINE.md) for the protocol, account lifecycle and implementation
-boundaries. Local run and deployment notes live in `RUNNING.local.md`, which is deliberately ignored
+boundaries. Local run and deployment notes live in `RUNNING.local.md` and `LIGHTSAIL.local.md`, which is deliberately ignored
 by Git. They are supplied alongside the development patch and are not part of the public repository.
 
 ## Verification and current boundaries
@@ -84,9 +91,14 @@ concurrent name reservations, account authentication, CSRF protection, reconnect
 protocol compatibility. Browser checks cover the guest gate, accounts, isometric interactions and
 responsive layout.
 
-Accounts survive a restart. Rooms and matches are held in memory and do not. Rankings, points,
-spectators, password recovery and saved online matches are future work. Custom maps and Tag modes
+Accounts, preferences and completed ranked results survive a restart. Rooms and matches are held
+in memory; unfinished ranked games are voided after a restart. Spectators, password recovery and
+saved online matches remain future work. Custom maps and Tag modes
 remain local. The deployment currently assumes one game-server instance.
+
+A future ASP.NET Core service could serve match history and statistics from completed-match events.
+Java should retain rule validation and rating authority. That service would need its own read model,
+an outbox and idempotent event handling; this version adds no .NET runtime or message broker.
 
 ## Project history and artwork
 

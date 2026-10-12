@@ -9,11 +9,13 @@ export interface Preferences {
   cursorColour: CursorColour;
   showLevels: boolean;
   soundEnabled: boolean;
+  volume: number;
 }
 export const defaultPreferences: Preferences = {
   cursorColour: "brown",
   showLevels: false,
   soundEnabled: true,
+  volume: 80,
 };
 export const GUEST_PREFERENCES_KEY = "santorini.preferences.v1";
 export function guestPreferences(): Preferences {
@@ -27,7 +29,15 @@ export function guestPreferences(): Preferences {
       typeof saved.showLevels === "boolean" &&
       typeof saved.soundEnabled === "boolean"
     )
-      return saved;
+      return {
+        ...saved,
+        volume:
+          Number.isInteger(saved.volume) &&
+          saved.volume >= 0 &&
+          saved.volume <= 100
+            ? saved.volume
+            : 80,
+      };
   } catch {
     /* Storage may be unavailable or contain an older value. */
   }
