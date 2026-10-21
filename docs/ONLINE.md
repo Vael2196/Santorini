@@ -50,39 +50,45 @@ over a match; reconnecting with that match's secret token replaces the interrupt
 | Endpoint | Behaviour |
 | --- | --- |
 | `GET /api/auth/csrf` | Issues the CSRF cookie and returns the request token |
-| `GET /api/auth/me` | Returns the authenticated account and preferences, or an unauthenticated result |
+| `GET /api/auth/me` | Returns the authenticated account, preferences and ranking profile, or an unauthenticated result |
 | `POST /api/auth/register` | JSON name/password; creates an account and sets its session cookie |
 | `POST /api/auth/login` | JSON name/password; verifies the hash and sets a fresh session cookie |
 | `POST /api/auth/preferences` | Saves cursor colour, tower-level display and sound settings for the cookie’s account |
 | `POST /api/auth/logout` | Revokes the session, closes the account's game seat and clears the cookie |
+| `GET /api/leaderboard` | Returns ranked standings in pages of 50; accounts with no completed ranked games are omitted |
 
 State-changing requests include `X-XSRF-TOKEN`. Responses carrying identity information are not cached.
-There is no email collection, password-recovery service, leaderboard or points ledger in this version.
-Stable account IDs and server-side identities are the foundation for those future changes.
+There is no email collection or password-recovery service. Stable account IDs associate preferences,
+ranked results and rating changes with the authenticated player.
 
-Account preferences live in `player_accounts`; migration V2 supplies defaults for existing accounts.
+Account preferences live in `player_accounts`; V2 adds the original settings and V4 adds volume
+with a default of 80 for existing accounts.
 `cursorColour` accepts `brown`, `charcoal`, `teal` or `ivory`; `showLevels` and `soundEnabled` are
-required booleans. Preference updates resolve the account exclusively from its authenticated cookie.
-The browser serialises saves and reports failures with a retry control. Logout waits for pending
-saves. Guest preferences use localStorage and have no server-side account record.
+required booleans; `volume` is an integer from 0 to 100. Preference updates resolve the account
+exclusively from its authenticated cookie. The browser debounces and serialises saves, and reports
+failures with a retry control. Logout waits for pending saves. Guest preferences use localStorage and have no server-side account record.
 
 ## Game protocol
 
-`/ws` accepts JSON text messages. Coordinates use `row` and `col`, each 0–4. Worker IDs 0–1 belong
-to seat zero and 2–3 to seat one. Public room snapshots contain names and game state, never secrets.
+`/ws` accepts JSON text messages. Coordinates use `row` and `col`, each 0–4. Worker ownership follows
+the mode's worker count: `seat = workerId / workersPerPlayer` using integer division. Duels and
+three-player games use two workers per player; four-player modes use one. Public room snapshots
+contain names and game state, never secrets.
 
 | Command | Fields and behaviour |
 | --- | --- |
 | `HELLO` | Guest `name`, or secret `token` for recovery; authenticated account identity comes from the handshake |
 | `GOODBYE` | Ends the visit, forfeits an active match and releases the game session |
-| `CREATE` | `rules`: `CLASSIC` or `GODS`; makes a private waiting room |
-| `QUEUE` | Rules; joins the oldest compatible public waiting room or creates one |
+| `CREATE` | Rules and mode; makes a private waiting room |
+| `QUEUE` | Rules, mode and ranked flag; casual queues use FIFO, ranked queues favour nearby ratings |
+| `SOLO` | Duel rules; creates a private practice game with a computer seat |
 | `JOIN` | `roomId`; joins a waiting room with an available seat |
 | `CHOOSE_GOD` | God and room version; chooses a unique card and clears readiness |
-| `READY` | Version; toggles readiness and starts when both connected players are ready |
+| `READY` | Version; toggles readiness and starts when every required seat is connected and ready |
 | `ACTION` | Version, request ID and an action from the current legal-action list |
 | `RESIGN` | Version; concedes the match |
 | `LEAVE` | Cancels a waiting seat or forfeits an active match, retaining the player session |
+| `CHAT` | Plain text and request ID; room-scoped, filtered and independent of the game version |
 | `PING` | Keeps the connection active and receives `PONG` |
 
 Actions are `PLACE`, `SELECT`, `CANCEL`, `MOVE`, `END_MOVE`, `BUILD` and `END_TURN`. Unused worker
@@ -92,6 +98,8 @@ and fresh snapshots; they do not automatically replay actions.
 `WELCOME` gives the client its private match token and its own identity (name, guest flag and account
 ID where applicable). `STATE` carries the room, `LEFT` returns to the lobby, `BYE` ends the visit,
 `ERROR` supplies a stable code and readable message, and `PONG` acknowledges the heartbeat.
+`CHAT` broadcasts accepted messages; `CHAT_HISTORY` restores the latest 50 messages after joining
+or reconnecting. Both chat event types include a room ID.
 
 Browser match tokens use sessionStorage, separate from the account cookie. Desktop guest recovery
 tokens use Java preferences keyed by server and name. A room code admits a new seat; it cannot resume

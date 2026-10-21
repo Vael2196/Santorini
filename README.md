@@ -1,112 +1,170 @@
-# Santorini
+<p align="center">
+  <img src="web-client/public/favicon.png" width="72" height="72" alt="Santorini windrose" />
+</p>
 
-A strategy game for two to four players: move your workers, build towers and reach the third level.
+<h1 align="center">Santorini</h1>
 
-Santorini is a Java board-game project with a browser client and online multiplayer. Players
-can meet through the public queue or share a private room code. A browser player and a Java
-desktop player use the same server and can play at the same table.
+<p align="center">
+  <strong>Build the island. Reach the summit.</strong><br />
+  A strategy game for two to four players, with browser and Java desktop cross-play.
+</p>
 
-The project began as a university team application built with Swing. This version extends that
-work with a headless game engine, a Spring Boot server and a React/TypeScript interface. The
-original local games, save snapshots and experimental map editor remain in the desktop application.
+<p align="center">
+  <a href="https://santorini.vaell.dev"><strong>Play online</strong></a>
+  &nbsp;·&nbsp;
+  <a href="#choose-your-game">Game modes</a>
+  &nbsp;·&nbsp;
+  <a href="#architecture">Architecture</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Vael2196/Santorini/issues">Report an issue</a>
+</p>
 
-## Playing online
+<p align="center">
+  <a href="https://github.com/Vael2196/Santorini/actions/workflows/online.yml"><img src="https://github.com/Vael2196/Santorini/actions/workflows/online.yml/badge.svg" alt="Online game checks" /></a>
+  <img src="https://img.shields.io/badge/Java-17-956039?style=flat" alt="Java 17" />
+  <img src="https://img.shields.io/badge/Spring_Boot-3.5-567346?style=flat" alt="Spring Boot 3.5" />
+  <img src="https://img.shields.io/badge/React-TypeScript-39666d?style=flat" alt="React and TypeScript" />
+</p>
 
-Guest players choose a temporary name and enter without a password. Names are unique across
-active guests and registered accounts, ignoring case and surrounding spaces. A disconnected guest
-has a short window to return before the name becomes available again.
+![Illustration of a five-by-five isometric board with stone towers, a dome and four numbered workers](docs/assets/board-illustration.svg)
 
-Players can also create an account with a name and password. Account names and identities persist
-between visits and server restarts. Logged-in players can join ranked Classic duels and appear on the leaderboard. Ratings begin at
-1200 and use Elo: an upset earns more points than a win against a lower-rated opponent. The queue
-favours similar ratings and gradually broadens its search. The first ten results are provisional.
+Move your workers, raise towers and shape the paths across a shared five-by-five board. Climb from
+level two to level three to win—or build a dome to close a route before someone else gets there.
 
-Private rooms admit players with an eight-character code. The public queue pairs players using
-the same rules and never selects a private room. Players choose a mode and rules, then mark themselves
-ready and place their workers. Two- and three-player games give each player two workers. Four-player
-games use one worker each, either in a free for all or two teams (seats 1/3 against 2/4). Four-player
-games use Classic rules. A blocked player leaves a free-for-all game; a team win or forfeit settles
-the whole team. A private practice mode adds a computer opponent without awarding ranking points. The server then controls the turn sequence and legal actions.
+Santorini brings a university Java/Swing project to the web through a shared game core, a Spring Boot
+server and a React/TypeScript client. Play a friend, join the public queue, practise against the
+computer or compete in ranked Classic duels.
 
-The browser view uses parchment textures, isometric stone tiles, framed panels and small tool
-cursors. A hammer marks a legal build; a boot marks a legal move. Numbered workers, coordinates, available actions
-and optional tower-level markers identify the board state without relying on colour alone. Legal tiles
-support keyboard navigation and activation. The board has a dark outline for contrast. Game settings
-offer four cursor colours (dark brown by default) and optional level markers above buildings. The self-hosted Kalam handwriting font keeps the parchment legible. Short
-interaction sounds share one mute button and a volume popup with a slider and ± controls in the header. Settings are saved to an account for registered
-players and on the device for guests.
+## At the table
 
-Room chat accepts plain text only, with length and rate limits, link blocking and a basic word filter.
-Messages belong to the room and disappear when it expires. Players can hide chat locally.
+- **Public and private rooms.** Find players using the same mode and rules, or share an eight-character
+  room code with friends.
+- **Browser and desktop cross-play.** Both clients join the same rooms and use the same authoritative
+  game server.
+- **Guests and accounts.** Enter without a password as a guest, or create an account to reserve your
+  name, save preferences and play ranked games. No email address is required.
+- **Ranked Classic duels.** Elo ratings reflect the strength of your opponent. Matchmaking favours
+  nearby ratings and widens its search over time; completed results feed the leaderboard.
+- **Computer practice.** Play an unranked duel against the computer, with Classic rules or god
+  powers.
+- **Room chat.** Text-only messages with length and rate limits, link blocking and a basic word filter.
+- **A parchment game board.** Isometric tiles, handwritten type, numbered workers and tool cursors,
+  with optional tower-level labels, four cursor colours, keyboard controls, sound volume and mute.
 
-## Rules in this version
+## Choose your game
 
-On a normal turn, select a worker, move to an empty neighbouring tile, then build nearby. Climbing
-from level two to level three wins the match. A player with no legal move loses. A dome closes a tile.
+| Mode | Players | Workers per player |
+| --- | --- | --- |
+| Computer practice | You and the computer | 2 |
+| Duel | 2 | 2 |
+| Three-player free for all | 3 | 2 |
+| Four-player free for all | 4 | 1 |
+| Teams | 4, in two teams | 1 |
 
-| Rules or power | Behaviour |
+Two- and three-player games support Classic rules or god powers. Four-player games use Classic
+rules; in teams, seats **1 and 3** play against **2 and 4**. Ranked play is limited to Classic duels
+between registered accounts. Computer practice and the larger modes are unranked.
+
+Ratings start at **1200**, with a provisional label for the first ten completed ranked games. A win
+against a higher-rated opponent earns more points than a win against a lower-rated opponent.
+
+## How to play
+
+1. Open [the game](https://santorini.vaell.dev), choose a guest name or log in, then enter a room.
+2. Choose a god power if the room uses them, mark yourself ready and place your workers on empty tiles.
+3. On your turn, select a worker, move to an empty neighbouring tile, then build beside it. Diagonals count.
+4. Climb from level two to level three to win. Domes block movement; a player without a legal action
+   leaves play. In a free for all, the remaining players continue. In teams, a win or forfeit settles
+   the whole team.
+
+| Power | Effect in this project |
 | --- | --- |
-| Classic | One move, followed by one build |
 | Artemis | An optional second move, without returning to the starting tile |
-| Demeter | An optional second build, on a different tile |
-| Triton | This project's variant: additional moves may continue at the same height |
+| Demeter | An optional second build, on a different neighbouring tile |
+| Triton | Additional moves while each step stays at the same height |
 
-The online engine preserves the original project's one-level limit for both climbing and descending.
-These are project variants; the implementation does not claim exact compatibility with the published
-game's full rules or card catalogue. Optional actions have explicit buttons so a player can stop
-moving or building without making an invalid move.
+**Rules variant:** this implementation preserves the original project's one-level limit for both
+climbing and descending. Triton's same-height movement is also a project variant. The available
+powers and rules differ from the published game's full catalogue.
 
 ## Architecture
 
+The server owns the online board. Clients submit actions; the server validates the player's seat,
+turn, room version and legal moves before broadcasting the next snapshot.
+
+```mermaid
+flowchart LR
+    Browser["React browser client"] <-->|"JSON / WebSocket"| Server["Spring Boot server"]
+    Desktop["Java desktop client"] <-->|"Same protocol"| Server
+    Server --> Core["Java game core"]
+    Server --> Store["H2 / MySQL"]
+```
+
 | Component | Responsibility |
 | --- | --- |
-| Java game core | Board entities, god strategies, turn transitions and immutable protocol records |
-| Spring Boot server | Authoritative matches, rooms, matchmaking, reconnection and account sessions |
-| React + TypeScript client | Browser controls and an SVG board using static image assets |
-| Java Swing client | Original local game and a network view using the shared protocol |
-| SQL account store | Persistent account IDs, password hashes revocable session records, preferences and ranked results |
-| Nginx | Production static files and HTTP/WebSocket reverse proxy |
+| [Game core](game-core) | Headless rules, board state, god strategies and shared protocol records |
+| [Multiplayer server](multiplayer-server) | Rooms, matchmaking, computer turns, accounts, chat and rating settlement |
+| [Web client](web-client) | React, TypeScript and Vite; an interactive SVG board with locally served artwork and audio |
+| [Desktop client](desktop-client) | The original Swing game and its network view, built against the shared Java core |
+| SQL and Flyway | Persistent accounts, preferences, sessions and ranked results, with versioned schema migrations |
+| Docker Compose and Nginx | Separate application containers, static-file delivery and HTTP/WebSocket proxying |
 
-Clients send intentions rather than replacement boards. The server checks the player's seat, turn,
-room version and legal actions before publishing a new snapshot. Games pause briefly when a player
-disconnects. A returning player receives the current board; commands are not silently replayed.
+The Java core is loaded as a library. Browser rendering stays on the client, while one Spring Boot
+process coordinates online rooms. H2 supports local persistence; MySQL supports the shared-server
+deployment on AWS Lightsail.
 
-Accounts use BCrypt password hashes, opaque session cookies and CSRF protection. Account cookies
-are HttpOnly; session secrets are hashed in the database. Guest tokens stay out of public snapshots
-and URLs. Registered names share a namespace with guest reservations.
+### Engineering decisions
 
-A single Spring Boot service and a static web client keep deployment suitable for a modest server.
-The default account database is a persistent H2 file. MySQL is supported through configuration,
-including an existing shared database service. Flyway manages the schema. The browser board uses
-SVG rather than a WebGL renderer, so the artwork adds no rendering work to the server.
+- **Keep the rules in one place.** A headless core reuses the original Java model and god strategies
+  across the server and desktop builds.
+- **Validate state transitions.** Room-scoped locking serialises game actions, and snapshot versions
+  reject stale updates. A temporary disconnection pauses play and reserves the seat for recovery.
+- **Settle ratings once.** Each ranked match has a unique settlement ID. A SQL transaction updates
+  both ratings and the result together; retries return the recorded changes.
+- **Separate identity from display names.** Registered and guest names share a normalised namespace.
+  Accounts use BCrypt password hashes, hashed session secrets, HttpOnly cookies and CSRF protection.
+- **Keep the deployment small.** SVG rendering and static assets support the board without a 3D
+  runtime. Separate Compose projects and database credentials let the deployment share a host with
+  other applications.
 
-See [the architecture notes](docs/ONLINE.md) for the protocol, account lifecycle and implementation
-boundaries. Local run and deployment notes live in `RUNNING.local.md` and `LIGHTSAIL.local.md`, which is deliberately ignored
-by Git. They are supplied alongside the development patch and are not part of the public repository.
+See the [architecture notes](docs/ONLINE.md) for protocol fields, concurrency boundaries, matchmaking,
+chat limits and the account lifecycle. Operational run notes are maintained separately from this
+public project overview.
 
-## Verification and current boundaries
+## Quality and current scope
 
-Automated checks cover turn ownership, illegal and stale actions, god powers, matchmaking isolation,
-concurrent name reservations, account authentication, CSRF protection, reconnection and desktop/browser
-protocol compatibility. Browser checks cover the guest gate, accounts, isometric interactions and
-responsive layout.
+[GitHub Actions](https://github.com/Vael2196/Santorini/actions/workflows/online.yml) builds the Java
+modules and web client, then runs:
 
-Accounts, preferences and completed ranked results survive a restart. Rooms and matches are held
-in memory; unfinished ranked games are voided after a restart. Spectators, password recovery and
-saved online matches remain future work. Custom maps and Tag modes
-remain local. The deployment currently assumes one game-server instance.
+| Checks | What they exercise |
+| --- | --- |
+| Java unit and integration tests | Legal actions, god powers, multiplayer modes, computer decisions, room isolation, accounts, rating settlement and protocol compatibility |
+| React integration tests | The real interface against the server, including preferences, solo play, multiplayer modes and chat |
+| Playwright browser tests | Room flows, reconnection, ranked results, account preferences, mobile layout and keyboard interaction |
 
-A future ASP.NET Core service could serve match history and statistics from completed-match events.
-Java should retain rule validation and rating authority. That service would need its own read model,
-an outbox and idempotent event handling; this version adds no .NET runtime or message broker.
+Automated database checks use H2.
 
-## Project history and artwork
+The online deployment currently uses **one game-server instance**. Accounts, preferences and
+completed ranked results persist. Rooms and chat history are held in memory; a restart ends active
+rooms and voids unfinished ranked games. Spectating, password recovery and saved online matches
+are not currently implemented.
 
-The original application was developed by Team024, including Vadim Filyakin (`vfil0001`). Its later
-work includes Triton, save snapshots, a map editor and a Tag-inspired mode. The historical executable
-in the repository predates online play; the current Maven desktop build contains the network client.
+Custom maps, local save files and the Tag-inspired mode remain desktop features. The historical
+executable in this repository predates online play; the current desktop source includes the network
+client.
 
-Selected artwork and sound licence files are kept in
-[web-client/public/assets/licences](web-client/public/assets/licences).
+## Feedback and contributions
 
-[Santorini source](https://github.com/Vael2196/Santorini)
+Found a bug or have a small improvement in mind? [Open an issue](https://github.com/Vael2196/Santorini/issues)
+with the steps to reproduce it, your browser or desktop client version, and the expected and actual
+behaviour. For a larger change, discuss the approach in an issue before opening a pull request.
+
+## Credits and licences
+
+The original desktop application was developed by **Team024**, including **Vadim Filyakin**
+(`vfil0001`). Subsequent work by [Vadim Filyakin](https://github.com/Vael2196) extends it with the
+online game service, browser interface and deployment architecture.
+
+Artwork and audio licence notices are kept in
+[assets/licences](web-client/public/assets/licences). The self-hosted Kalam font uses the
+[SIL Open Font Licence](web-client/public/assets/licences/Kalam-OFL.txt).
