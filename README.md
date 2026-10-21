@@ -160,7 +160,7 @@ behaviour. For a larger change, discuss the approach in an issue before opening 
 ## Credits and licences
 
 The original desktop application was developed by **Team024**, including **Vadim Filyakin**
-(`vfil0001`). Subsequent work by [Vadim Filyakin](https://github.com/Vael2196) extends it with the
+(`vfil0001`). Subsequent work by [Vadim Filyakin (that's me :D)](https://github.com/Vael2196) extends it with the
 online game service, browser interface and deployment architecture.
 
 Artwork and audio licence notices are kept in
