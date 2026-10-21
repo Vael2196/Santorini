@@ -26,8 +26,6 @@
   <img src="https://img.shields.io/badge/React-TypeScript-39666d?style=flat" alt="React and TypeScript" />
 </p>
 
-![Illustration of a five-by-five isometric board with stone towers, a dome and four numbered workers](docs/assets/board-illustration.svg)
-
 Move your workers, raise towers and shape the paths across a shared five-by-five board. Climb from
 level two to level three to win—or build a dome to close a route before someone else gets there.
 
