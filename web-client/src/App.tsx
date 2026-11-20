@@ -409,9 +409,9 @@ export default function App() {
                 Reach the summit.
               </h1>
               <p className="intro-copy">
+                Play Santorini, an online multiplayer strategy board game.
                 Move your workers, raise towers and block your opponent’s path.
-                Climb to the third level to win. On this island, every step
-                counts.
+                Climb to the third level to win.
               </p>
               <div className="map-illustration">
                 <img
@@ -988,14 +988,8 @@ export default function App() {
       <footer className="footer">
         <span>Santorini · towers and tactics</span>
         <span>
-          Designed and Developed by{" "}
-          <a
-            href="https://github.com/Vael2196"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Vael (Vadim Filyakin)
-          </a>
+          Web adaptation by{" "}
+          <a href="https://vaell.dev/projects/santorini/">Vadim Filyakin</a>
         </span>
         <span>Move. Build. Climb.</span>
       </footer>
